@@ -20,6 +20,7 @@ describe.skipIf(!dbAvailable)('notification wiring', () => {
   let categoryId = ''
   let student: Actor
   let moderator: Actor
+  let officer: Actor
   let officerId = ''
   let studentEmail = ''
   let officerEmail = ''
@@ -60,6 +61,7 @@ describe.skipIf(!dbAvailable)('notification wiring', () => {
       officerId = o.id
       student = { id: s.id, role: 'student', institutionId: instId }
       moderator = { id: m.id, role: 'moderator', institutionId: instId }
+      officer = { id: o.id, role: 'redressal_officer', institutionId: instId }
 
       const [cat] = await tx
         .insert(categories)
@@ -200,9 +202,12 @@ describe.skipIf(!dbAvailable)('notification wiring', () => {
       subject: 'Grade dispute',
       body: 'Revaluation result never appeared.',
     })
+    // The moderator screens and routes; only an officer may drive a case into progress
+    // and resolve it. Using the wrong actor here leaves the status at under_review, from
+    // which an appeal is not a legal transition.
     await transitionStatus(moderator, g.id, 'under_review', 'Screened.')
-    await transitionStatus(moderator, g.id, 'in_progress', 'Taken up.')
-    await transitionStatus(moderator, g.id, 'resolved', 'No change on review.')
+    await transitionStatus(officer, g.id, 'in_progress', 'Taken up.')
+    await transitionStatus(officer, g.id, 'resolved', 'No change on review.')
 
     const result = await fileAppeal(student, g.id, {
       body: 'The decision does not address the marks discrepancy I described.',

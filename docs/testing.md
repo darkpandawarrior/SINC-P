@@ -3,7 +3,7 @@
 What is tested, what deliberately is not, and why the split falls where it does.
 
 ```bash
-npm test              # 271 unit and integration
+npm test              # 272 unit and integration
 npm run test:e2e      # 8 browser steps, needs the app running
 npm run typecheck     # tsc + the 'use server' guard
 npm run db:check-rls  # asserts row-level security is actually on
@@ -117,7 +117,7 @@ continuously, test it continuously rather than at three convenient points.
 
 ## Coverage
 
-Floor of 70% lines, 65% functions, 60% branches, enforced in CI. Real number is about 73%.
+Floor of 70% lines, 65% functions, 60% branches, enforced in CI. Real number is about 75%.
 
 It is a floor, not a target. It exists to catch a pull request that adds a module and no
 test, not to be chased upward. The security-critical modules are near-exhaustively covered;
