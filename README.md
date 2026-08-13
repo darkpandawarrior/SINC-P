@@ -19,7 +19,8 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 ![Postgres](https://img.shields.io/badge/Postgres_17-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Drizzle](https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=flat-square&logo=drizzle&logoColor=black)
 ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-194-success?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-215-success?style=flat-square)
+![Coverage](https://img.shields.io/badge/coverage-73%25-success?style=flat-square)
 ![Tenant isolation](https://img.shields.io/badge/tenant_isolation-Postgres_RLS-0f766e?style=flat-square)
 ![UGC](https://img.shields.io/badge/UGC_Grievance_Regs-2023-0ea5e9?style=flat-square)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-64748b?style=flat-square)](LICENSE)
@@ -60,7 +61,7 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 </details>
 
 > **At a glance.** **25 routes** across five role-scoped areas · **10 tables**, every tenant row
-> under `FORCE ROW LEVEL SECURITY` · **194 tests** (147 pure, 47 against a real Postgres) ·
+> under `FORCE ROW LEVEL SECURITY` · **215 tests** at 73% coverage ·
 > a hash-chained audit trail re-verified on every seed run · **one command** that proves tenant
 > isolation actually fires instead of asking you to believe it.
 
@@ -127,6 +128,10 @@ buys the audit trail; the students show up for the scoreboard.
   type, a size cap enforced while streaming rather than after buffering, opaque storage keys
   outside the web root, and authorisation re-checked on every download. The 2019 version wrote
   `$_FILES` straight into a web-served folder under the user's own filename.
+- 📬 **A transactional outbox, not fire-and-forget email.** A queued message is written in
+  the same transaction as the thing that caused it, so a rolled-back status change cannot
+  tell a student their case moved. Delivery happens out of band, which keeps SMTP latency
+  and SMTP outages out of the request path entirely.
 - 🧪 **Tests that skip instead of screaming.** 47 of the 194 talk to a real Postgres on purpose,
   because RLS and database triggers cannot be meaningfully mocked. Without a database they skip
   with a message telling you which command to run, so a fresh clone never looks broken.
@@ -401,9 +406,11 @@ to do. Only running it tells you what it does.
   no workflow.
 - **Attachments.** Real storage, sniffing, caps and authorisation. Local disk driver only. S3 is
   a documented seam, not an implementation.
-- **Email and notifications: not built.** Escalation computes who *should* be notified and
-  records it. Nothing is sent. This is the biggest single gap between this repo and a deployable
-  product.
+- **Notifications.** Real. Filing, assignment and status changes queue a message in a
+  transactional outbox, drained by `npm run notify:send`. Two transports ship: stdout for
+  development, and a small SMTP client written directly against `node:net`/`node:tls`
+  rather than pulling in a mail library to say `MAIL FROM`. Delivery is at-least-once
+  with a dedupe key, five attempts, then dead-lettered. Not yet run against a real relay.
 - **SSO: not built.** There is a seam for OIDC, nothing behind it.
 - **Malware scanning on uploads: not built.**
 - **Rate limiting.** Real, but in-process memory. Correct for one node, insufficient behind a
@@ -440,12 +447,12 @@ recoverable. Losing one is not.
 ## Testing and quality
 
 ```bash
-npm test              # 194 tests
+npm test              # 215 tests
 npm run typecheck     # strict, noUncheckedIndexedAccess
 npm run db:check-rls  # asserts RLS is enabled, forced, and policied
 ```
 
-147 tests are pure and run anywhere. 47 talk to a real Postgres deliberately, because RLS, the
+Most run anywhere. About a quarter talk to a real Postgres deliberately, because RLS, the
 append-only trigger and cross-tenant behaviour are database behaviour and a mock of them would
 assert nothing at all. Without a database those suites **skip with a message naming the command to
 run**, so a fresh clone never greets you with five red files.
@@ -474,7 +481,7 @@ answers to the ten objections that will genuinely come up.
 ## Roadmap
 
 - [ ] Screenshots and a flow GIF for this README
-- [ ] Email notifications, which is the real blocker on deployability
+- [ ] Run the SMTP transport against a real college relay
 - [ ] Malware scanning before an upload becomes downloadable
 - [ ] Redis-backed rate limiting for multi-instance deployments
 - [ ] OIDC and SAML through the existing seam

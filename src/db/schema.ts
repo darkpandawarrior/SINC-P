@@ -83,6 +83,8 @@ export const eventType = pgEnum('event_type', [
   'withdrawn',
 ])
 
+export const notificationStatus = pgEnum('notification_status', ['pending', 'sent', 'failed'])
+
 export const visibility = pgEnum('visibility', [
   'public', // student who filed it can see
   'internal', // staff only — screening notes, routing rationale
@@ -413,6 +415,59 @@ export const authEvents = pgTable(
   (t) => [index('auth_events_lookup_idx').on(t.institutionId, t.kind, t.createdAt)],
 )
 
+// ---------------------------------------------------------------------------
+// Notification outbox
+// ---------------------------------------------------------------------------
+
+/**
+ * Queued messages, written in the same transaction as the thing that caused them.
+ *
+ * Sending inline would mean one of two bad outcomes: the grievance transaction blocks
+ * while SMTP hand-shakes, or a message goes out for a transaction that then rolls back
+ * and tells a student their case moved when it did not. Writing the row transactionally
+ * and delivering it separately makes the message exactly as durable as the state change
+ * it describes.
+ *
+ * Delivery is at-least-once. `dedupeKey` lets a caller make an event idempotent, so a
+ * retried escalation sweep does not send the same breach warning twice.
+ */
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    institutionId: uuid('institution_id')
+      .notNull()
+      .references(() => institutions.id, { onDelete: 'cascade' }),
+
+    /** Null when the recipient is an address rather than a user (imported staff). */
+    recipientUserId: uuid('recipient_user_id').references(() => users.id, {
+      onDelete: 'cascade',
+    }),
+    recipientEmail: varchar('recipient_email', { length: 255 }).notNull(),
+
+    /** grievance_submitted | status_changed | assigned | sla_breached | appeal_filed */
+    kind: varchar('kind', { length: 40 }).notNull(),
+    grievanceId: uuid('grievance_id').references(() => grievances.id, { onDelete: 'cascade' }),
+
+    subject: text('subject').notNull(),
+    body: text('body').notNull(),
+
+    status: notificationStatus('status').notNull().default('pending'),
+    attempts: integer('attempts').notNull().default(0),
+    lastError: text('last_error'),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+
+    /** Unique per institution when present. The idempotency handle. */
+    dedupeKey: varchar('dedupe_key', { length: 160 }),
+
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('notifications_pending_idx').on(t.status, t.createdAt),
+    uniqueIndex('notifications_dedupe_uq').on(t.institutionId, t.dedupeKey),
+  ],
+)
+
 export type Institution = typeof institutions.$inferSelect
 export type User = typeof users.$inferSelect
 export type Category = typeof categories.$inferSelect
@@ -421,3 +476,4 @@ export type GrievanceEvent = typeof grievanceEvents.$inferSelect
 export type Attachment = typeof attachments.$inferSelect
 export type Announcement = typeof announcements.$inferSelect
 export type HandbookEntry = typeof handbookEntries.$inferSelect
+export type Notification = typeof notifications.$inferSelect

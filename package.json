@@ -23,7 +23,8 @@
     "db:import-legacy": "tsx --env-file-if-exists=.env.local scripts/import-legacy.ts",
     "db:up": "docker compose up -d db && node scripts/wait-for-db.mjs",
     "db:rls": "node scripts/apply-rls.mjs",
-    "db:check-rls": "node scripts/check-rls.mjs"
+    "db:check-rls": "node scripts/check-rls.mjs",
+    "notify:send": "tsx --env-file-if-exists=.env.local scripts/send-notifications.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

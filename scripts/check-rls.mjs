@@ -32,6 +32,7 @@ const TENANT_TABLES = [
   'announcements',
   'handbook_entries',
   'auth_events',
+  'notifications',
 ]
 
 const url =

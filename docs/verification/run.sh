@@ -83,5 +83,15 @@ for op in "UPDATE grievance_events SET remark='rewritten' WHERE seq=1" "DELETE F
   fi
 done
 
+echo "==> erasure: deleting a tenant must cascade, everything else must not"
+if docker exec -i "$CONTAINER" psql -U sincp -d sincp -q -v ON_ERROR_STOP=1 \
+     -c "DELETE FROM institutions WHERE id='bbbbbbbb-0000-0000-0000-00000000000b'" >/dev/null 2>&1; then
+  printf '  ok    %-52s cascaded\n' "tenant erasure"
+else
+  printf '  FAIL  %-52s blocked\n' "tenant erasure"; fail=1
+fi
+check "the erased tenant is gone" 0 "$(q sincp_admin "SELECT count(*) FROM grievances WHERE institution_id='bbbbbbbb-0000-0000-0000-00000000000b'")"
+check "the other tenant is untouched" 1 "$(q sincp_admin "SELECT count(*) FROM grievances WHERE institution_id='aaaaaaaa-0000-0000-0000-00000000000a'")"
+
 echo
 [ "$fail" -eq 0 ] && echo "ALL CHECKS PASSED" || { echo "FAILURES ABOVE"; exit 1; }

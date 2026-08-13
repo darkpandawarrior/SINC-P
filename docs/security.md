@@ -152,6 +152,35 @@ every download re-checks `canView()` on the parent grievance.
 - Old md5 hashes are not migrated, so a legacy import does not carry a known-broken
   credential store into the new system.
 
+## Notifications
+
+Messages are queued in the same transaction as the event that caused them, then
+delivered out of band. Two properties matter for security rather than for reliability:
+
+- **Anonymous filings are never emailed.** The identity is retained for audit but no
+  message is addressed to it, because the filing form promises the committee will not
+  see who filed.
+- **The SMTP client dot-stuffs bodies and strips CR/LF from headers.** A body line that
+  is a single `.` terminates the DATA command, so an unescaped one truncates the mail
+  and lets the remaining text be read as SMTP commands. A newline in a subject would let
+  a grievance title append its own `Bcc:`. Both have tests.
+
+Delivery is at-least-once. A `dedupeKey` makes a repeated escalation sweep idempotent,
+and a message that fails five times is dead-lettered rather than retried forever.
+
+## Erasure
+
+The append-only trigger permits a `DELETE` that arrives as a cascade from removing a
+parent (`pg_trigger_depth() > 1`) and refuses every direct one. Without that, deleting
+an institution was impossible and there was no way to honour a DPDP erasure request or
+offboard a tenant.
+
+This does not weaken the trail, because `DELETE` on `grievances` is revoked from both
+application roles. The only route to a cascade is an owner deliberately removing a
+tenant. What stays forbidden is the thing the chain exists to prevent: editing or
+removing history while keeping the case it describes. Covered by
+`docs/verification/run.sh`, which asserts both the cascade and the refusal.
+
 ## Known gaps
 
 Ordered by how much they would worry a real deployment.

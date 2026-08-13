@@ -91,7 +91,8 @@ DECLARE
   t text;
   tenant_tables text[] := ARRAY[
     'users', 'sessions', 'categories', 'grievances', 'grievance_events',
-    'attachments', 'announcements', 'handbook_entries', 'auth_events'
+    'attachments', 'announcements', 'handbook_entries', 'auth_events',
+    'notifications'
   ];
 BEGIN
   FOREACH t IN ARRAY tenant_tables LOOP
@@ -130,6 +131,19 @@ CREATE POLICY institutions_tenant_isolation ON institutions
 CREATE OR REPLACE FUNCTION grievance_events_append_only() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
+  -- A cascade from deleting the parent institution or grievance runs at trigger depth
+  -- greater than one. Those are permitted: erasing an entire tenant is a legitimate
+  -- operation (offboarding, and the DPDP Act's erasure duty), and a trail with no case
+  -- attached to it protects nobody. What stays forbidden is the thing the chain exists
+  -- to prevent: editing or removing history while keeping the case that history is about.
+  --
+  -- This is not a hole in the guarantee, because the roles that could abuse it cannot
+  -- reach it. DELETE on grievances is revoked from both application roles below, so the
+  -- only way to trigger a cascade is to be the owner deliberately removing a tenant.
+  IF TG_OP = 'DELETE' AND pg_trigger_depth() > 1 THEN
+    RETURN OLD;
+  END IF;
+
   RAISE EXCEPTION 'grievance_events is append-only (attempted %)', TG_OP
     USING HINT = 'Record a correcting event instead of editing history.';
 END
@@ -145,3 +159,9 @@ REVOKE UPDATE, DELETE ON grievance_events FROM sincp_app;
 -- may rewrite an audit trail, and "the admin tool did it" is exactly the excuse the
 -- chain exists to rule out.
 REVOKE UPDATE, DELETE ON grievance_events FROM sincp_admin;
+
+-- No application path deletes a grievance. Withdrawal is a status, not a removal, and
+-- a case that can be deleted is a case whose audit trail can be laundered by deleting
+-- its parent. Removing a tenant is an owner-level operation, done deliberately.
+REVOKE DELETE ON grievances FROM sincp_app;
+REVOKE DELETE ON grievances FROM sincp_admin;

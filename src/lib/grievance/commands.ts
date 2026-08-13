@@ -6,7 +6,7 @@
  * compliance claim, which is why the writes live together rather than beside the reads.
  */
 import { and, eq } from 'drizzle-orm'
-import { withTenant } from '@/db/client'
+import { withTenant, type Tx } from '@/db/client'
 import {
   attachments,
   categories,
@@ -48,6 +48,8 @@ import {
   visibilitySchema,
   ConcurrentTransitionError,
 } from './_internal'
+import { enqueue } from '@/lib/notify/outbox'
+import * as tpl from '@/lib/notify/templates'
 
 // ---------------------------------------------------------------------------
 // Mutations
@@ -123,6 +125,8 @@ export async function submitGrievance(actor: Actor, input: SubmitGrievanceInput)
       visibility: 'public',
     })
 
+    await notifyFiler(tx, actor, grievance, 'grievance_submitted')
+
     return toActorView(actor, grievance)
   })
 }
@@ -178,6 +182,13 @@ export async function transitionStatus(
       visibility: 'public',
     })
 
+    // The student hears about every public status change except the one they made
+    // themselves; telling someone what they just did is noise that trains people to
+    // filter the address.
+    if (actor.id !== updated.submittedById) {
+      await notifyFiler(tx, actor, updated, 'status_changed', validRemark ?? null)
+    }
+
     return { ok: true, grievance: toActorView(actor, updated) }
   })
 }
@@ -205,7 +216,7 @@ export async function assignGrievance(
     // only within the same institution — RLS would stop a cross-tenant assignee too,
     // but failing here means the caller gets null instead of an FK-constraint 500.
     const [assignee] = await tx
-      .select({ id: users.id, role: users.role })
+      .select({ id: users.id, role: users.role, email: users.email })
       .from(users)
       .where(and(eq(users.id, validAssigneeId), eq(users.institutionId, actor.institutionId)))
       .limit(1)
@@ -228,6 +239,28 @@ export async function assignGrievance(
       payload: { assigneeId: validAssigneeId },
       visibility: 'internal', // routing rationale, not the filer's business
     })
+
+    // Tell the officer they now own a case with a clock on it. Not the student: who is
+    // handling their grievance internally is routing detail, and it changes.
+    const [inst] = await tx
+      .select({ name: institutions.name })
+      .from(institutions)
+      .where(eq(institutions.id, actor.institutionId))
+      .limit(1)
+
+    if (inst) {
+      const rendered = tpl.assigned(updated, inst)
+      await enqueue(tx, {
+        institutionId: actor.institutionId,
+        recipientUserId: validAssigneeId,
+        recipientEmail: assignee.email,
+        kind: 'assigned',
+        grievanceId: updated.id,
+        subject: rendered.subject,
+        body: rendered.body,
+        dedupeKey: tpl.dedupeKeyFor('assigned', updated.id, validAssigneeId),
+      })
+    }
 
     return toActorView(actor, updated)
   })
@@ -440,3 +473,59 @@ export async function bulkTransition(
 }
 
 /** Filter-dropdown data for the queue page. */
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+/**
+ * Queue a message to whoever filed a grievance, inside the caller's transaction.
+ *
+ * Silent for anonymous filings. The identity is retained for audit, but emailing it
+ * would defeat the point of offering anonymity in the first place, and the student was
+ * told plainly that the committee would not see who they are.
+ */
+async function notifyFiler(
+  tx: Tx,
+  actor: Actor,
+  grievance: Grievance,
+  kind: 'grievance_submitted' | 'status_changed',
+  remark: string | null = null,
+): Promise<void> {
+  if (grievance.isAnonymous || !grievance.submittedById) return
+
+  const [filer] = await tx
+    .select({ email: users.email })
+    .from(users)
+    .where(and(eq(users.id, grievance.submittedById), eq(users.institutionId, actor.institutionId)))
+    .limit(1)
+  if (!filer) return
+
+  const [institution] = await tx
+    .select({ name: institutions.name })
+    .from(institutions)
+    .where(eq(institutions.id, actor.institutionId))
+    .limit(1)
+  if (!institution) return
+
+  const rendered =
+    kind === 'grievance_submitted'
+      ? tpl.grievanceSubmitted(grievance, institution)
+      : tpl.statusChanged(grievance, institution, remark)
+
+  await enqueue(tx, {
+    institutionId: actor.institutionId,
+    recipientUserId: grievance.submittedById,
+    recipientEmail: filer.email,
+    kind,
+    grievanceId: grievance.id,
+    subject: rendered.subject,
+    body: rendered.body,
+    // A status change can legitimately repeat (resolved, reopened, resolved), so the
+    // status itself is part of the key rather than just the grievance.
+    dedupeKey:
+      kind === 'grievance_submitted'
+        ? tpl.dedupeKeyFor(kind, grievance.id)
+        : tpl.dedupeKeyFor(kind, grievance.id, `${grievance.status}:${grievance.updatedAt.getTime()}`),
+  })
+}
