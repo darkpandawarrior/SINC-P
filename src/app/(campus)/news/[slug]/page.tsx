@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge'
 import { getSession } from '@/lib/auth/session'
 import { isStaff } from '@/lib/grievance/policy'
 import { renderMarkdown } from '@/lib/markdown'
-import { getAnnouncementBySlug, NEWS_CHANNELS, type NewsChannel } from '@/lib/news/service'
+import { getAnnouncementBySlug, type NewsChannel } from '@/lib/news/service'
 import { getPublicInstitution } from '@/lib/stats'
 
 const CHANNEL_LABELS: Record<NewsChannel, string> = {

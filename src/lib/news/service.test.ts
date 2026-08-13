@@ -4,7 +4,7 @@
  */
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { dbAvailable, SKIP_REASON } from '@/test/db'
+import { dbAvailable } from '@/test/db'
 import { pool, withoutTenantScope } from '@/db/client'
 import { institutions, users } from '@/db/schema'
 import { AuthError } from '@/lib/auth/session'

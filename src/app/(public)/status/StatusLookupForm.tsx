@@ -7,7 +7,6 @@ import { Alert } from '@/components/ui/Alert'
 import { Card, CardBody } from '@/components/ui/Card'
 import { StatusPill } from '@/components/ui/StatusPill'
 import { SlaBadge } from '@/components/ui/SlaBadge'
-import { isOpen } from '@/lib/grievance/policy'
 import { lookupGrievanceStatus, type StatusLookupResult, type StatusLookupState } from './actions'
 
 const initialState: StatusLookupState = { status: 'idle' }

@@ -58,8 +58,9 @@ export function parseInserts(sqlText: string, table: string): string[][] {
   // Match the statement head for this table only, then read tuples until the ';'.
   const head = new RegExp(`INSERT INTO \`?${table}\`?\\s*\\([^)]*\\)\\s*VALUES`, 'gi')
 
-  let m: RegExpExecArray | null
-  while ((m = head.exec(sqlText)) !== null) {
+  // The match itself is never read: `head.lastIndex` is what drives the tuple reader
+  // below, so the loop only needs to know that another statement head exists.
+  while (head.exec(sqlText) !== null) {
     let i = head.lastIndex
     let current: string[] | null = null
     let field = ''

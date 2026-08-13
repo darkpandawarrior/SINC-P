@@ -68,13 +68,21 @@ export async function submitGrievanceAction(formData: FormData): Promise<void> {
       // existing attachment route (route.ts) casts the same boundary the other direction.
       const webStream = file.stream() as unknown as Parameters<typeof Readable.fromWeb>[0]
       const put = await storage.put(Readable.fromWeb(webStream), { declaredContentType: file.type || undefined })
-      await addAttachment(actor, grievanceId, {
-        storageKey: put.storageKey,
-        fileName: file.name,
-        contentType: put.contentType,
-        byteSize: put.byteSize,
-        sha256: put.sha256,
-      })
+      try {
+        await addAttachment(actor, grievanceId, {
+          storageKey: put.storageKey,
+          fileName: file.name,
+          contentType: put.contentType,
+          byteSize: put.byteSize,
+          sha256: put.sha256,
+        })
+      } catch (err) {
+        // The bytes are already on disk. If the row that points at them fails to write,
+        // the file is unreachable forever and nothing will ever clean it up, so drop it
+        // here rather than leaving storage to accumulate orphans nobody can audit.
+        await storage.delete(put.storageKey).catch(() => {})
+        throw err
+      }
     } catch (err) {
       const reason = err instanceof StorageError ? err.message : 'upload failed'
       attachmentErrors.push(`${file.name}: ${reason}`)

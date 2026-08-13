@@ -9,9 +9,9 @@
 import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { dbAvailable, SKIP_REASON } from '@/test/db'
+import { dbAvailable } from '@/test/db'
 import { pool, withoutTenantScope, withTenant } from '@/db/client'
-import { categories, grievanceEvents, grievances, handbookEntries, institutions, users } from '@/db/schema'
+import { categories, grievanceEvents, handbookEntries, institutions, users } from '@/db/schema'
 import type { Actor } from '@/lib/grievance/policy'
 import { GENESIS_HASH, verifyChain } from './audit'
 import {
