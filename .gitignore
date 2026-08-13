@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+build/
+.env
+.env.local
+.env*.local
+*.log
+.DS_Store
+coverage/
+storage/
+!storage/.gitkeep
+next-env.d.ts
+*.tsbuildinfo
+.playwright-mcp/
+AGENTS.md
+CLAUDE.md

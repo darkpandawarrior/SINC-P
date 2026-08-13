@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: sincp
+          POSTGRES_PASSWORD: sincp
+          POSTGRES_DB: sincp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sincp -d sincp"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://sincp:sincp@localhost:5432/sincp
+      DATABASE_MIGRATION_URL: postgres://sincp:sincp@localhost:5432/sincp
+      # Same owner connection as above — CI has no separate sincp_app role, so there is
+      # nothing to scope down to. See docker-compose.yml for the production version of
+      # this tradeoff.
+      DATABASE_ADMIN_URL: postgres://sincp:sincp@localhost:5432/sincp
+      SESSION_SECRET: ci-only-secret-not-used-for-anything-real
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # npm 10.x (bundled with Node 22) mis-serializes an optional peer dep vitest pulls
+      # in, and `npm ci` then hard-fails reading that lockfile shape. Fixed in npm 12 —
+      # see the matching note in the Dockerfile's deps stage.
+      - run: npm install -g npm@12
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run lint
+
+      # Tests exercise withTenant()/RLS against a real database, so schema + policies
+      # have to exist before `npm test`. CI runs as the owner role throughout — there
+      # is no separate sincp_app user here, which is fine: RLS is enforced by the
+      # policy's institution_id check, not by which role is connected.
+      - name: Apply schema and row-level security policies
+        run: |
+          npx drizzle-kit push --force
+          psql "$DATABASE_MIGRATION_URL" -v ON_ERROR_STOP=1 -f drizzle/0001_rls.sql
+
+      - run: npm test
+
+      - run: npm run build

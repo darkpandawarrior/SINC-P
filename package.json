@@ -1,0 +1,53 @@
+{
+  "name": "sinc-p",
+  "version": "2.0.0",
+  "private": true,
+  "description": "SINC-P \u2014 statutory grievance redressal and campus communications for Indian higher education.",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "npm run typecheck && next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "db:push": "drizzle-kit push && npm run db:rls && npm run db:check-rls",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "_comment_env": "Scripts load .env.local explicitly. Next does this itself, but a bare tsx run does not, and falling back to the default connection string silently connects as the superuser, which bypasses RLS and makes tenant isolation look broken.",
+    "db:seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
+    "db:import-legacy": "tsx --env-file-if-exists=.env.local scripts/import-legacy.ts",
+    "db:up": "docker compose up -d db && node scripts/wait-for-db.mjs",
+    "db:rls": "node scripts/apply-rls.mjs",
+    "db:check-rls": "node scripts/check-rls.mjs"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.44.7",
+    "lucide-react": "^1.27.0",
+    "next": "16.3.0",
+    "pg": "^8.16.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.1.2",
+    "@types/pg": "^8.15.6",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitest/coverage-v8": "^4.1.10",
+    "drizzle-kit": "^0.31.6",
+    "postcss": "^8.5.25",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,0 +1,83 @@
+# One-command deploy for a bare box: `docker compose up -d --build`.
+#
+# Three services: `db` (Postgres 17), `migrate` (a one-shot container that pushes the
+# schema, applies row-level security, and exits — see docker/migrate-entrypoint.sh),
+# and `app` (the Next.js server). `app` waits for `migrate` to exit 0, so a fresh box
+# ends up with a correct, RLS-enforced schema before it ever serves a request.
+#
+# Every value below has a default so this runs with zero configuration for a first
+# look. Before anything that matters touches this — see docs/deployment.md — set real
+# values for DB_OWNER_PASSWORD, DB_APP_PASSWORD and SESSION_SECRET in a `.env` file
+# next to this one; Compose reads it automatically.
+#
+# Note the `db` service publishes no host port: Postgres is reachable only from other
+# containers on the compose network, which is the correct default for a box that also
+# runs other things. `app` binds to 127.0.0.1 by default because it expects the
+# college's existing nginx in front of it — see docs/deployment.md for the vhost.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_OWNER_USER:-sincp}
+      POSTGRES_PASSWORD: ${DB_OWNER_PASSWORD:-sincp_owner_dev_only}
+      POSTGRES_DB: ${DB_NAME:-sincp}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # $$ escapes Compose's own interpolation so the container's shell sees the var.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_MIGRATION_URL: postgres://${DB_OWNER_USER:-sincp}:${DB_OWNER_PASSWORD:-sincp_owner_dev_only}@db:5432/${DB_NAME:-sincp}
+      DATABASE_URL: postgres://sincp_app:${DB_APP_PASSWORD:-sincp_app_dev_only}@db:5432/${DB_NAME:-sincp}
+      # ponytail: reuses the owner connection for withoutTenantScope's admin pool. The
+      # official postgres image's owner user is the initdb superuser, which bypasses RLS
+      # unconditionally — correct today, but it is a wider grant than that pool needs.
+      # Swap for a role with only BYPASSRLS (no DDL rights) once drizzle/0001_rls.sql
+      # defines one.
+      DATABASE_ADMIN_URL: postgres://${DB_OWNER_USER:-sincp}:${DB_OWNER_PASSWORD:-sincp_owner_dev_only}@db:5432/${DB_NAME:-sincp}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:-sincp_app_dev_only}
+      # Set SEED=true in .env for the first run on a demo/pilot box. Leave it unset
+      # (or false) once real student data exists — the seed is idempotent per
+      # institution but there is no reason to run it against a live tenant.
+      SEED: ${SEED:-false}
+
+  app:
+    build:
+      context: .
+      target: runner
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://sincp_app:${DB_APP_PASSWORD:-sincp_app_dev_only}@db:5432/${DB_NAME:-sincp}
+      # Login/signup run before a tenant is known and need withoutTenantScope — see the
+      # ponytail note on the migrate service's DATABASE_ADMIN_URL above.
+      DATABASE_ADMIN_URL: postgres://${DB_OWNER_USER:-sincp}:${DB_OWNER_PASSWORD:-sincp_owner_dev_only}@db:5432/${DB_NAME:-sincp}
+      SESSION_SECRET: ${SESSION_SECRET:-dev-only-change-me-before-production-openssl-rand-base64-32}
+      STORAGE_DIR: /app/storage
+      STORAGE_MAX_BYTES: ${STORAGE_MAX_BYTES:-10485760}
+      NODE_ENV: production
+    volumes:
+      - storage:/app/storage
+    ports:
+      # Override APP_PORT to e.g. "8080" (all interfaces) to expose directly without
+      # nginx. Default binds loopback only — nginx is expected to proxy to it.
+      - "${APP_PORT:-127.0.0.1:3000}:3000"
+
+volumes:
+  pgdata:
+  storage:

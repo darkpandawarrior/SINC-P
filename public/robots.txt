@@ -1,0 +1,6 @@
+# Grievance content is per-institution and behind auth; nothing here is meant to be
+# crawled. The public disclosure page and closure-time stats are the exception, and
+# they carry no reason to opt out — this file exists mainly so the Docker build has a
+# non-empty public/ directory to copy.
+User-agent: *
+Allow: /
