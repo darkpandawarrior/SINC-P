@@ -484,7 +484,10 @@ query, because a per-record check does not protect a list endpoint and without i
 officer queue would hand a moderator every ICC complaint in the institution.
 
 The seed creates two ICC cases and a committee member, so you can try to break it rather
-than believe it.
+than believe it. Eight integration tests run the real query layer against a real database
+and check the things a per-record test cannot: that ICC cases are absent from the queue
+*total* and not merely off the page, and that guessing the category id does not get you
+around the gate.
 
 Reading the regulation also found a bug. The clause says the SGRC reports *"preferably
 within a period of **15 working days**"*
@@ -615,7 +618,7 @@ recoverable. Losing one is not.
 ## Testing and quality
 
 ```bash
-npm test              # 263 unit and integration
+npm test              # 271 unit and integration
 npm run test:e2e      # 8 steps through a real browser (needs the app running)
 npm run audit         # fails on a high or critical advisory
 npm run typecheck     # strict, noUncheckedIndexedAccess

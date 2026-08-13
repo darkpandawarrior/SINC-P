@@ -576,6 +576,9 @@ async function seedSystemicBurst(
         submittedById: student.id,
         categoryId: leaf.id,
         kind: 'grievance',
+        // From the category, not hardcoded: a Ragging & Harassment filing belongs on the
+        // anti_ragging track, and defaulting it to sgrc would quietly misfile every one.
+        track: leaf.track,
         subject: template.subject,
         body: template.body,
         status: 'in_progress',
@@ -782,6 +785,9 @@ async function seedGrievances(
         isAnonymous,
         categoryId: leaf.id,
         kind: 'grievance',
+        // From the category, not hardcoded: a Ragging & Harassment filing belongs on the
+        // anti_ragging track, and defaulting it to sgrc would quietly misfile every one.
+        track: leaf.track,
         subject: template.subject,
         body: template.body,
         status,
