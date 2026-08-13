@@ -19,13 +19,13 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 ![Postgres](https://img.shields.io/badge/Postgres_17-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Drizzle](https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=flat-square&logo=drizzle&logoColor=black)
 ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-227-success?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-260-success?style=flat-square)
 ![Coverage](https://img.shields.io/badge/coverage-73%25-success?style=flat-square)
 ![Tenant isolation](https://img.shields.io/badge/tenant_isolation-Postgres_RLS-0f766e?style=flat-square)
 ![UGC](https://img.shields.io/badge/UGC_Grievance_Regs-2023-0ea5e9?style=flat-square)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-64748b?style=flat-square)](LICENSE)
 
-**[Why](#why-sinc-p)** · **[Highlights](#highlights)** · **[What changed](#what-changed-since-2019)** · **[Screens](#screens)** · **[Architecture](#architecture)** · **[Getting started](#getting-started)** · **[Prove it](#prove-it-yourself)** · **[Honesty](#whats-real-and-what-isnt-honestly)**
+**[Why](#why-sinc-p)** · **[Highlights](#highlights)** · **[What changed](#what-changed-since-2019)** · **[Screens](#screens)** · **[AI and agents](#the-2026-layer-ai-and-agents)** · **[Architecture](#architecture)** · **[Getting started](#getting-started)** · **[Compliance](#compliance-cited)** · **[Prove it](#prove-it-yourself)** · **[Honesty](#whats-real-and-what-isnt-honestly)**
 
 **Portfolio:** [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/) &nbsp;·&nbsp; **Origin:** final-year project, MANIT Bhopal, 2019 &nbsp;·&nbsp; **Siblings:** [Mileway](https://github.com/darkpandawarrior/Mileway) · [PaymentsLab](https://github.com/darkpandawarrior/PaymentsLab) · [Kursi](https://github.com/darkpandawarrior/Kursi)
 
@@ -41,6 +41,7 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 - [What changed since 2019](#what-changed-since-2019)
 - [The three pillars, and their honest depth](#the-three-pillars-and-their-honest-depth)
 - [Screens](#screens)
+- [The 2026 layer: AI and agents](#the-2026-layer-ai-and-agents)
 - [Architecture](#architecture)
   - [Tenancy, in four layers](#tenancy-in-four-layers)
   - [The audit chain](#the-audit-chain)
@@ -48,6 +49,7 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
   - [Module map](#module-map)
 - [Tech stack](#tech-stack)
 - [Getting started](#getting-started)
+- [Compliance, cited](#compliance-cited)
 - [Prove it yourself](#prove-it-yourself)
 - [Three bugs that only running the thing found](#three-bugs-that-only-running-the-thing-found)
 - [What's real and what isn't, honestly](#whats-real-and-what-isnt-honestly)
@@ -61,7 +63,7 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 </details>
 
 > **At a glance.** **25 routes** across five role-scoped areas · **10 tables**, every tenant row
-> under `FORCE ROW LEVEL SECURITY` · **227 tests** at 73% coverage, plus an 8-step browser journey ·
+> under `FORCE ROW LEVEL SECURITY` · **260 tests** at 73% coverage, plus an 8-step browser journey ·
 > a hash-chained audit trail re-verified on every seed run · **one command** that proves tenant
 > isolation actually fires instead of asking you to believe it.
 
@@ -202,6 +204,13 @@ the transitions `canSetStatus` actually permits for this actor, so the interface
 button the server will refuse. The callout says tamper-evident rather than tamper-proof, which is
 the honest claim.
 
+![The officer console surfacing a systemic issue](docs/screenshots/08-systemic-patterns.png)
+
+*Four separate grievances, one underlying problem.* Block C lost water on a Monday and four
+students filed about it in their own words. Resolved individually, that is four closures and a
+healthy median with nobody recording that a hostel block had no water for a week. Grouped by
+shared wording, not by a model, and the officer is told to judge it themselves.
+
 ![Published closure times, with small cells suppressed](docs/screenshots/02-transparency.png)
 
 *The transparency page, which needs no login.* Median days to resolution per category, with any
@@ -219,6 +228,54 @@ are inline SVG with an accessible table underneath, no charting library, no exte
 *The screen that gets screenshotted into a NAAC self-study report.* Median resolution by category,
 breach counts, ageing buckets, appeal rate, CSV export, and a print stylesheet that produces a
 clean A4 page.
+
+## The 2026 layer: AI and agents
+
+A 2019 complaint portal could not have done any of this. The obvious 2026 move is a chat
+box, and it is also the fastest way to destroy the only asset this product has: a record
+that is defensible. A student whose ragging complaint was closed by a language model has a
+second, worse grievance, and this time the institution has no defence.
+
+So the AI here is deliberately unglamorous. It reads and suggests. It never writes a
+decision. Four rules, argued in full in [ADR-0002](docs/decisions/0002-ai-and-agents.md):
+
+1. **Off by default.** No `AI_PROVIDER` means a local, deterministic, no-network provider.
+   Every feature still works, slightly worse.
+2. **Nothing decides.** A human sets every status. There is no code path where a model
+   changes an outcome.
+3. **Every suggestion is auditable.** Provider, model, confidence, and what it said.
+4. **Text is redacted before it leaves the machine.** Names, roll numbers, phones,
+   Aadhaar, PAN. Point `AI_BASE_URL` at a box in the college's own server room.
+
+**Urgency detection runs locally, always.** Ragging, harassment, threats, risk to life,
+injury, safety hazards. It cannot be switched off by leaving a model unconfigured, and a
+model is never allowed to clear a flag it raised. A false positive costs an officer a
+glance. A false negative is a ragging report sitting behind a library card complaint for
+two days. Those are not comparable, so the list is broad on purpose.
+
+**Category suggestion** withholds itself below 0.45 confidence, because a wrong
+pre-selection gets accepted by a tired moderator and ends up in the compliance report.
+
+**Clustering is the genuinely new capability.** Forty students report the same mess
+problem, forty officers write forty remarks, and the compliance report shows forty
+closures and a healthy median. Nobody writes the sentence that matters: *the mess has a
+problem*. The officer console now surfaces those groups. Term overlap rather than
+embeddings, because a few hundred open grievances is microseconds of Jaccard and no GPU.
+
+### The agentic part
+
+`npm run agents:run` sweeps for breached deadlines, escalates up the UGC ladder, queues
+notifications, and writes an audit event per action. Its authority is exactly three verbs:
+**escalate, notify, record.**
+
+It cannot close a grievance or set a status a human owns. An agent that could resolve
+cases would be the fastest route to a clean compliance report, and a clean report nobody
+earned is the exact fraud this system exists to make hard. There is a test asserting it
+leaves status untouched, and another asserting a second sweep escalates nothing twice.
+
+Every action it takes appends to the same hash chain a human action would, with `actorId`
+null and the agent named in the payload, because "the system escalated it" has to be as
+auditable as "the Registrar escalated it".
 
 ## Architecture
 
@@ -306,6 +363,8 @@ src/
     sla.ts              statutory clock, Asia/Kolkata, calendar or working days
     service.ts          every mutation, each writing its event in the same transaction
   lib/auth/             scrypt, server sessions, CSRF, rate limiting
+  lib/ai/               provider seam, redaction, triage, clustering
+  lib/agents/           the SLA watchdog, bounded to escalate/notify/record
   app/(public)          landing · transparency · disclosures · status lookup
   app/(student)/my      file · track · withdraw · accept · appeal
   app/(staff)/staff     queue · case view · compliance dashboard
@@ -361,6 +420,37 @@ Then <http://localhost:3000>. Every seeded account shares the password the seed 
 
 The seed builds **two** institutions on purpose. Cross-tenant isolation should be something you
 can try to break, not something you have to take my word for.
+
+## Compliance, cited
+
+[**docs/compliance.md**](docs/compliance.md) maps every regulatory requirement to where
+this product actually stands, with a link on every claim and the gaps named rather than
+omitted. The short version:
+
+**Built:** the UGC 2023 grievance flow end to end, statutory clocks, the Ombudsperson
+appeal tier, published disclosures, a tamper-evident record.
+
+**Not built, and it matters:** sexual harassment complaints are governed by the PoSH Act
+2013 and the UGC 2015 Regulations, which require a separate Internal Complaints Committee
+and a ninety-day inquiry, with confidentiality a shared staff queue actively breaks.
+SINC-P routes everything through the SGRC, so **it must not be offered as the PoSH
+channel** until ICC routing exists. NAAC 5.1.4 explicitly says *including sexual
+harassment and ragging cases*, so the product cannot fully evidence 5.1.4 today.
+
+Reading the regulation also found a bug. The clause says the SGRC reports *"preferably
+within a period of **15 working days**"*
+([source](https://webstor.srmist.edu.in/web_assets/downloads/2023/ugc-redressal-2023.pdf)),
+and the SLA engine was counting calendar days. That understates the deadline by about a
+week once weekends are in, which in a compliance product means reporting breaches that
+never happened. `slaUseWorkingDays` now defaults to true.
+
+**Two free alternatives exist and you should know about them.**
+[UGC e-Samadhaan](https://samadhaan.ugc.ac.in/) is the national escalation portal: a
+complaint reaching it is one your own process did not catch, and the regulation separately
+requires institutions to run their own. [Samarth eGov](https://samarth.edu.in/) is a
+Ministry of Education ERP with a grievance module, free, and already installed across
+central universities, which is a concrete reason to sell to private institutions rather
+than government ones. The full landscape is in [docs/gtm/market.md](docs/gtm/market.md).
 
 ## Prove it yourself
 
@@ -427,10 +517,23 @@ to do. Only running it tells you what it does.
   rather than pulling in a mail library to say `MAIL FROM`. Delivery is at-least-once
   with a dedupe key, five attempts, then dead-lettered. Not yet run against a real relay.
 - **SSO: not built.** There is a seam for OIDC, nothing behind it.
+- **AI assist.** Real, and off by default. Urgency detection and clustering need no model
+  at all. Category suggestion improves with one. Never tested against a hosted provider,
+  only against a local OpenAI-compatible endpoint and fakes.
+- **The urgency keyword list is English-only.** A grievance in Hindi or Hinglish will not
+  trip it, which is a real gap for this market and is on the roadmap rather than solved.
+- **The watchdog has no true dry-run.** `--dry` prints a warning telling you to run
+  against a copy of the database instead.
 - **Malware scanning on uploads: not built.**
 - **Rate limiting.** Real, with two stores. In-process memory by default, and a shared
   Postgres store (`RATE_LIMIT_STORE=postgres`) for when a second app container appears.
 - **Screenshots in this README: not captured yet.**
+- **PoSH / ICC routing: not built.** See [compliance.md](docs/compliance.md). The product
+  must not be sold as the sexual harassment channel until it is.
+- **Anti-Ragging Committee as a distinct statutory body: not built.** The category exists
+  with a short clock and a triage bypass, which is not the same thing.
+- **Retention, per-student erasure and breach notification: not built.** All three are
+  DPDP obligations on the institution running this.
 - **A paying customer, or a pilot, or a design partner: none.** This is the artefact you take
   to the first Registrar conversation, not evidence that the conversation went well.
 
@@ -509,6 +612,12 @@ answers to the ten objections that will genuinely come up.
 ## Roadmap
 
 - [ ] A flow GIF of one grievance end to end
+- [ ] ICC / PoSH routing as a separate confidential regime, the largest compliance gap
+- [ ] Anti-Ragging Committee and squad workflow, plus a link to antiragging.in
+- [ ] Retention policy, per-student erasure, and breach notification for DPDP
+- [ ] e-Samadhaan reconciliation, so UGC-forwarded complaints match internal cases
+- [ ] Hindi and Hinglish urgency detection
+- [ ] A real no-write dry run for the watchdog
 - [ ] Run the SMTP transport against a real college relay
 - [ ] Malware scanning before an upload becomes downloadable
 - [ ] OIDC and SAML through the existing seam

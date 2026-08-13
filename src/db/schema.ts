@@ -104,8 +104,21 @@ export const institutions = pgTable(
     // during onboarding and it makes the tenant list verifiable against a real registry.
     aisheCode: varchar('aishe_code', { length: 16 }),
 
-    /** Statutory clocks, in days. Defaults are the UGC 2023 figures. */
+    /**
+     * Statutory clocks, from the UGC (Redressal of Grievances of Students)
+     * Regulations, 2023.
+     *
+     * The SGRC clause reads "preferably within a period of 15 **working** days from the
+     * date of receipt of the complaint", which is why `slaUseWorkingDays` defaults to
+     * true. Counting those 15 as calendar days understates every deadline by roughly a
+     * week once weekends and holidays are in, and understating a statutory deadline in a
+     * compliance product means reporting breaches that never happened.
+     *
+     * The appeal window (15 days) and the Ombudsperson period (30 days) are stated
+     * without "working", so they are counted as calendar days.
+     */
     slaResolutionDays: integer('sla_resolution_days').notNull().default(15),
+    slaUseWorkingDays: boolean('sla_use_working_days').notNull().default(true),
     slaAppealWindowDays: integer('sla_appeal_window_days').notNull().default(15),
     slaOmbudspersonDays: integer('sla_ombudsperson_days').notNull().default(30),
 

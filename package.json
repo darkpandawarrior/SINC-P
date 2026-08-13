@@ -26,7 +26,8 @@
     "db:check-rls": "node scripts/check-rls.mjs",
     "notify:send": "tsx --env-file-if-exists=.env.local scripts/send-notifications.ts",
     "audit": "npm audit --audit-level=high",
-    "test:e2e": "vitest run tests/e2e"
+    "test:e2e": "vitest run tests/e2e",
+    "agents:run": "tsx --env-file-if-exists=.env.local scripts/run-agents.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

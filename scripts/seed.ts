@@ -409,6 +409,107 @@ function submittedDaysAgo(bucket: Bucket, sla: number, i: number): number {
   }
 }
 
+/**
+ * One deliberate systemic incident per institution.
+ *
+ * Eight students reporting the same water outage in the same week, in their own words.
+ * This is what a real campus produces after a real failure, and it is the case the
+ * clustering in `src/lib/ai/clusters.ts` exists to catch: eight separate cases, eight
+ * separate resolutions, and nobody writing down that Block C had no water for a week.
+ *
+ * Without it the demo shows an empty patterns panel, which is correct behaviour and a
+ * poor demonstration of the feature it is correct about.
+ */
+const SYSTEMIC_BURST: Array<{ subject: string; body: string }> = [
+  { subject: 'No water supply in Block C since Monday', body: 'There has been no water supply in Block C hostel since Monday morning. The overhead tank is empty and nobody has come to check it.' },
+  { subject: 'Block C hostel water supply completely stopped', body: 'Water supply to Block C stopped on Monday. Students are carrying buckets from Block D every morning.' },
+  { subject: 'Water outage in Block C for four days now', body: 'No water in Block C hostel for four days. The warden says the pump is being repaired but nothing has changed.' },
+  { subject: 'Block C water tank empty, no repair yet', body: 'The Block C overhead water tank has been empty since Monday. Reported to the warden twice with no repair.' },
+  { subject: 'No water in Block C bathrooms', body: 'Bathrooms in Block C hostel have had no water supply all week. This is a hygiene problem for the whole wing.' },
+  { subject: 'Water supply failure Block C hostel', body: 'Block C has had no water since the start of the week. The pump failure was reported and nobody has repaired it.' },
+  { subject: 'Still no water supply in Block C', body: 'Fifth day without water in Block C hostel. Students are missing morning classes because they cannot bathe.' },
+  { subject: 'Block C water problem not fixed', body: 'The water supply problem in Block C hostel has still not been fixed. The tank is empty every morning.' },
+]
+
+async function seedSystemicBurst(
+  tx: Tx,
+  institutionId: string,
+  seed: InstitutionSeed,
+  leaves: Leaf[],
+  people: SeededPeople,
+  startIndex: number,
+): Promise<void> {
+  const leaf =
+    leaves.find((l) => l.name === 'Room Allotment & Maintenance') ?? leaves[0]!
+  const now = new Date()
+
+  for (const [i, template] of SYSTEMIC_BURST.entries()) {
+    const student = people.students[i % people.students.length]!
+    const officer = people.officers[i % people.officers.length]!
+    // Filed over three days, as a real burst would be.
+    const createdAt = new Date(now.getTime() - (6 - Math.floor(i / 3)) * DAY_MS)
+    const dueAt = new Date(createdAt.getTime() + leaf.slaResolutionDays * DAY_MS)
+    const reference = `${seed.refPrefix}-${now.getFullYear()}-${String(startIndex + i + 1).padStart(5, '0')}`
+
+    const [row] = await tx
+      .insert(grievances)
+      .values({
+        institutionId,
+        reference,
+        submittedById: student.id,
+        categoryId: leaf.id,
+        kind: 'grievance',
+        subject: template.subject,
+        body: template.body,
+        status: 'in_progress',
+        assignedToId: officer.id,
+        dueAt,
+        createdAt,
+        updatedAt: createdAt,
+      })
+      .returning()
+    if (!row) throw new Error('seedSystemicBurst: insert returned no row')
+
+    const drafts: EventDraft[] = [
+      {
+        type: 'submitted',
+        actorId: student.id,
+        actorRole: 'student',
+        remark: null,
+        payload: { categoryId: leaf.id, kind: 'grievance' },
+        visibility: 'public',
+        createdAt,
+      },
+      {
+        type: 'status_changed',
+        actorId: people.moderator.id,
+        actorRole: 'moderator',
+        remark: 'Screened and routed to a redressal officer.',
+        payload: { from: 'submitted', to: 'in_progress' },
+        visibility: 'internal',
+        createdAt: new Date(createdAt.getTime() + DAY_MS),
+      },
+    ]
+
+    for (const e of chainEvents(row.id, drafts)) {
+      await tx.insert(grievanceEvents).values({
+        institutionId,
+        grievanceId: e.grievanceId,
+        seq: e.seq,
+        type: e.type,
+        actorId: e.actorId,
+        actorRole: e.actorRole,
+        remark: e.remark,
+        visibility: e.visibility,
+        payload: e.payload,
+        prevHash: e.prevHash,
+        hash: e.hash,
+        createdAt: e.createdAt,
+      })
+    }
+  }
+}
+
 async function seedGrievances(
   tx: Tx,
   institutionId: string,
@@ -769,6 +870,7 @@ async function main() {
         const leaves = await seedCategories(tx, id, seed.slaResolutionDays)
         const people = await seedUsers(tx, id, seed, passwordHash)
         await seedGrievances(tx, id, seed, leaves, people)
+        await seedSystemicBurst(tx, id, seed, leaves, people, FULL_PLAN.length)
         await seedAnnouncements(tx, id, people.admin.id, seed)
         await seedHandbook(tx, id, leaves)
       })

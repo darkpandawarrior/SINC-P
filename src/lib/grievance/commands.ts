@@ -83,6 +83,8 @@ export async function submitGrievance(actor: Actor, input: SubmitGrievanceInput)
     const dueAt = computeDueAt(now, {
       institutionSlaDays: institution.slaResolutionDays,
       categorySlaDays: category.slaResolutionDays,
+      // The UGC clause counts working days. See the note on the schema column.
+      mode: institution.slaUseWorkingDays ? 'working' : 'calendar',
     })
 
     // ponytail: the reference year uses the server's UTC calendar year, not the IST one
@@ -363,7 +365,12 @@ export async function fileAppeal(
       const now = new Date()
       // The Ombudsperson window, not the original SLA or its category override — an
       // appeal is a different statutory clock (UGC 2023's separate appeal-window figure).
-      const dueAt = computeDueAt(now, { institutionSlaDays: institution.slaOmbudspersonDays })
+      // The Ombudsperson clause says 30 days without qualifying them as working days,
+      // so this one stays on the calendar whatever the institution configures.
+      const dueAt = computeDueAt(now, {
+        institutionSlaDays: institution.slaOmbudspersonDays,
+        mode: 'calendar',
+      })
       const year = now.getUTCFullYear()
       const prefix = referencePrefix(institution.slug)
 

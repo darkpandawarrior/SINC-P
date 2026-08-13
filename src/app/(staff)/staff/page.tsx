@@ -8,7 +8,13 @@ import { StatusPill } from '@/components/ui/StatusPill'
 import { Table, Tbody, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { buttonClasses } from '@/components/ui/Button'
 import { type Status } from '@/lib/grievance/policy'
-import { listAssignableStaff, listCategories, listQueue, type QueueFilters } from '@/lib/grievance/service'
+import {
+  detectPatterns,
+  listAssignableStaff,
+  listCategories,
+  listQueue,
+  type QueueFilters,
+} from '@/lib/grievance/service'
 import { requireStaffActor } from '../_lib/actor'
 import { STATUS_LABELS } from '../_lib/status-labels'
 import { bulkAssignAction, bulkTransitionAction } from './actions'
@@ -67,10 +73,11 @@ export default async function StaffQueuePage({ searchParams }: PageProps) {
     page,
   }
 
-  const [categoriesList, staffList, queue] = await Promise.all([
+  const [categoriesList, staffList, queue, patterns] = await Promise.all([
     listCategories(actor),
     listAssignableStaff(actor),
     listQueue(actor, filters),
+    detectPatterns(actor),
   ])
 
   const categoryName = new Map(categoriesList.map((c) => [c.id, c.name]))
@@ -112,6 +119,44 @@ export default async function StaffQueuePage({ searchParams }: PageProps) {
             ? "Skipped rows weren't visible to you or didn't allow that change."
             : undefined}
         </Alert>
+      )}
+
+      {patterns.length > 0 && (
+        <section
+          aria-labelledby="patterns-heading"
+          className="rounded-lg border border-status-warning-border bg-status-warning-bg p-4"
+        >
+          <h2 id="patterns-heading" className="text-sm font-semibold text-fg">
+            Possible systemic issues
+          </h2>
+          <p className="mt-1 text-xs text-fg-muted">
+            Open grievances from the last 90 days that look like reports of the same underlying
+            problem. Grouped by shared wording, not by a model. Judge them yourself: resolving
+            these one at a time closes cases without fixing anything.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {patterns.map((p) => (
+              <li key={p.grievanceIds[0]} className="rounded-md border border-border bg-surface p-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="text-sm font-medium text-fg">
+                    {p.grievanceIds.length} grievances: {p.subject}
+                  </span>
+                  <span className="text-xs text-fg-muted">
+                    oldest open {p.oldestDaysOpen}d
+                    {p.categoryName ? ` · ${p.categoryName}` : ' · mixed categories'}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-fg-muted">
+                  Shared terms: {p.terms.join(', ') || 'none'}
+                </p>
+                <p className="mt-1 font-mono text-xs text-fg-muted">
+                  {p.references.slice(0, 8).join(' · ')}
+                  {p.references.length > 8 ? ` and ${p.references.length - 8} more` : ''}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <form method="get" className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-3">

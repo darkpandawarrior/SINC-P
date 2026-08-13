@@ -118,3 +118,59 @@ system. What's published externally is never individual complaint content, only 
 aggregate anonymised statistics mentioned in objection 4. This is a stronger protection
 than the status quo most colleges have today, where a paper register or an email thread
 can be read by anyone with physical or inbox access, with no log of who looked at what.
+
+## "Students can already complain to UGC on e-Samadhaan. Why do we need this?"
+
+Because e-Samadhaan is where a student goes when *you* have not resolved it. It is the
+escalation tier, and every complaint that reaches it is one your own process did not
+catch. UGC's portal is at <https://samadhaan.ugc.ac.in/> with a 24/7 toll-free line, and
+it issues a tracking ID to the student, not to you.
+
+Two further points, both checkable:
+
+- The 2023 regulation separately requires the institution to run its own online portal.
+  e-Samadhaan does not discharge that duty.
+- e-Samadhaan produces no internal record you can hand a NAAC team. It produces a record
+  of complaints against you.
+
+## "We are already on Samarth eGov, and it is free."
+
+Then this probably is not for you, and I would rather say so now than three meetings in.
+
+Samarth is a Ministry of Education ERP with a grievance module and it is genuinely good
+value at zero rupees (<https://samarth.edu.in/>). If it is installed and your office is
+actually using the grievance module, the honest answer is to keep using it.
+
+The narrow case where this is still worth a conversation: Samarth's grievance module is
+one module inside a full ERP, and what it gives you is a form, a status view and a list.
+If your accreditation cycle is close and the question you cannot answer is "what
+proportion of grievances were resolved inside the statutory window, as a number", that is
+a different depth of thing. Ask your Samarth administrator whether the module can produce
+that figure. If it can, you do not need me.
+
+## "Our ERP already has a grievance module."
+
+Probably true, and it is the hardest objection here because you are already paying for it
+and this would be a new line item.
+
+The comparison worth making is narrow. An ERP module gives you submission, status and a
+list. What it typically does not give you is working-day statutory clocks with automatic
+escalation, a record that cannot be edited after the fact, or an export built for the
+5.1.4 evidence request.
+
+The test is simple and you can run it today without me: open your ERP, pick a grievance
+closed eighteen months ago, and see whether you can show who decided it, when, and whether
+the record has been edited since. If you can, keep your ERP.
+
+## "Can we use this for sexual harassment complaints?"
+
+No, and you should be suspicious of any vendor who says yes without qualification.
+
+Sexual harassment complaints are governed by the PoSH Act 2013 and the UGC 2015
+Regulations: a separate Internal Complaints Committee, a ninety-day statutory inquiry, and
+confidentiality obligations that a shared staff queue actively breaks. SINC-P routes
+everything through the SGRC today, so putting a PoSH complaint into it would be worse than
+having no system.
+
+It is on the roadmap as a first-class item. Until it ships, keep your ICC channel
+separate. The full position is in [`../compliance.md`](../compliance.md).

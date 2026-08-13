@@ -6,7 +6,7 @@
  * halves change for different reasons: commands change when the workflow changes,
  * queries change when a screen needs a different shape.
  */
-import { and, asc, count, desc, eq, gte, inArray, isNull, lte } from 'drizzle-orm'
+import { and, asc, count, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { withTenant } from '@/db/client'
 import {
   attachments,
@@ -49,6 +49,7 @@ import {
   toActorView,
   uuidSchema,
 } from './_internal'
+import { clusterGrievances } from '@/lib/ai/clusters'
 
 // ---------------------------------------------------------------------------
 // Reads
@@ -418,5 +419,89 @@ export async function closeGrievance(
     })
 
     return { ok: true, grievance: toActorView(actor, updated) }
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Systemic patterns
+// ---------------------------------------------------------------------------
+
+export interface PatternGroup {
+  grievanceIds: string[]
+  references: string[]
+  subject: string
+  terms: string[]
+  cohesion: number
+  categoryName: string | null
+  oldestDaysOpen: number
+}
+
+/**
+ * Find the open grievances that are really one grievance.
+ *
+ * Forty students reporting the same mess problem show up as forty closures and a healthy
+ * median, and the sentence that matters ("the mess has a problem") never gets written.
+ * This is the query that writes it.
+ *
+ * Bounded to open cases from the last 90 days: a systemic problem worth surfacing is a
+ * live one, and clustering the entire history would find last year's resolved issues and
+ * present them as news.
+ */
+export async function detectPatterns(actor: Actor, limit = 5): Promise<PatternGroup[]> {
+  if (!isStaff(actor.role)) return []
+
+  const since = new Date(Date.now() - 90 * 86_400_000)
+
+  return withTenant(actor.institutionId, async (tx) => {
+    const rows = await tx
+      .select({
+        id: grievances.id,
+        reference: grievances.reference,
+        subject: grievances.subject,
+        body: grievances.body,
+        categoryId: grievances.categoryId,
+        createdAt: grievances.createdAt,
+        categoryName: categories.name,
+      })
+      .from(grievances)
+      .leftJoin(categories, eq(categories.id, grievances.categoryId))
+      .where(
+        and(
+          eq(grievances.institutionId, actor.institutionId),
+          gte(grievances.createdAt, since),
+          sql`${grievances.status} NOT IN ('closed','rejected','withdrawn')`,
+        ),
+      )
+
+    const byId = new Map(rows.map((r) => [r.id, r]))
+    const clusters = clusterGrievances(
+      rows.map((r) => ({
+        id: r.id,
+        subject: r.subject,
+        body: r.body,
+        categoryId: r.categoryId,
+        createdAt: r.createdAt,
+      })),
+    )
+
+    const now = Date.now()
+    return clusters.slice(0, limit).map((c) => {
+      const members = c.members.map((id) => byId.get(id)!).filter(Boolean)
+      const oldest = members.reduce(
+        (acc, m) => Math.min(acc, m.createdAt.getTime()),
+        now,
+      )
+      return {
+        grievanceIds: c.members,
+        references: members.map((m) => m.reference),
+        // The most recent member's subject reads as the group's headline better than any
+        // summary built out of the shared terms.
+        subject: members[0]?.subject ?? '',
+        terms: c.terms,
+        cohesion: c.cohesion,
+        categoryName: c.categoryId ? (members[0]?.categoryName ?? null) : null,
+        oldestDaysOpen: Math.floor((now - oldest) / 86_400_000),
+      }
+    })
   })
 }
