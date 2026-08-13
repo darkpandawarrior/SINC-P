@@ -3,7 +3,7 @@
 An accounting of what the original SINC-P did, what was wrong with it, and what replaced
 it. Written without gloating: the 2019 code was a group of undergraduates learning to
 ship, and it did ship. The point of this document is that the failure modes below are
-*ordinary* — they are what a PHP tutorial in 2016 taught, and they are still in
+*ordinary*, they are what a PHP tutorial in 2016 taught, and they are still in
 production at institutions today.
 
 ## Construct by construct
@@ -38,8 +38,8 @@ run an importer against the wrong tenant.
 | `subcategory` | `categories` with a parent |
 | `tblcomplaints` | `grievances`, reference `LEGACY-<year>-<n>` |
 | `complaintremark` | `grievance_events`, replayed in date order into a valid chain |
-| `state` | dropped — an address field inherited from the e-commerce template |
-| `userlog` | dropped — superseded by `auth_events`, no history worth keeping |
+| `state` | dropped, an address field inherited from the e-commerce template |
+| `userlog` | dropped, superseded by `auth_events`, no history worth keeping |
 
 Three decisions worth stating plainly:
 

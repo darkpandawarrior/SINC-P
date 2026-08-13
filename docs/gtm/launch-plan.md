@@ -2,7 +2,7 @@
 
 ## The core bet, stated plainly
 
-The highest-probability failure mode is not a technical one: it is a polished product
+The thing most likely to kill this ships perfectly and sits on a shelf: a polished product
 with no adopting college (ADR-0001 Q4/Q5, luna's dissent, which the ruling explicitly
 says is not yet fully answered). This plan is built around forcing that risk to surface
 early, in week 2, not in week 10 after the product is "finished."

@@ -52,7 +52,7 @@ After the fix, the identical attack returns **0**.
 
 Tests 7 and 8 are run **as the table owner**, deliberately. Running them as `sincp_app`
 proves nothing, because the `REVOKE UPDATE, DELETE` stops the statement before the
-trigger is ever reached — the first run of this suite made exactly that mistake and got
+trigger is ever reached, the first run of this suite made exactly that mistake and got
 a misleading `permission denied` pass.
 
 ## What is still not proven here

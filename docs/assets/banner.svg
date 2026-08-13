@@ -1,0 +1,51 @@
+<svg width="900" height="180" viewBox="0 0 900 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SINC-P — statutory grievance redressal for Indian higher education">
+  <defs>
+    <linearGradient id="sp-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0f766e"/>
+      <stop offset="55%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="sp-fade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+
+  <text x="450" y="74" text-anchor="middle" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="56" font-weight="800" fill="url(#sp-grad)" letter-spacing="1">
+    SINC-P
+    <animate attributeName="opacity" values="0;1" dur="0.9s" begin="0s" fill="freeze"/>
+  </text>
+
+  <text x="450" y="102" text-anchor="middle" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#64748b" letter-spacing="3">
+    STUDENT GRIEVANCE REDRESSAL
+    <animate attributeName="opacity" values="0;1" dur="1.2s" begin="0.4s" fill="freeze"/>
+  </text>
+
+  <!-- The audit chain: linked blocks, each committing to the one before it. The link
+       that lights up travels left to right, the way an event is appended. -->
+  <g transform="translate(232,132)">
+    <line x1="14" y1="8" x2="422" y2="8" stroke="url(#sp-fade)" stroke-width="2"/>
+    <g fill="none" stroke="url(#sp-grad)" stroke-width="2.5">
+      <rect x="0"   y="0" width="30" height="16" rx="3"/>
+      <rect x="68"  y="0" width="30" height="16" rx="3"/>
+      <rect x="136" y="0" width="30" height="16" rx="3"/>
+      <rect x="204" y="0" width="30" height="16" rx="3"/>
+      <rect x="272" y="0" width="30" height="16" rx="3"/>
+      <rect x="340" y="0" width="30" height="16" rx="3"/>
+      <rect x="408" y="0" width="30" height="16" rx="3"/>
+    </g>
+    <rect x="0" y="0" width="30" height="16" rx="3" fill="#0ea5e9" opacity="0.85">
+      <animate attributeName="x" values="0;68;136;204;272;340;408" dur="3.5s" repeatCount="indefinite" calcMode="discrete"/>
+    </rect>
+  </g>
+
+  <!-- The statutory clock: a 15-day UGC window closing. -->
+  <g transform="translate(806,120)">
+    <circle r="19" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+    <circle r="19" fill="none" stroke="url(#sp-grad)" stroke-width="3" stroke-linecap="round"
+            stroke-dasharray="119.4" stroke-dashoffset="119.4" transform="rotate(-90)">
+      <animate attributeName="stroke-dashoffset" values="119.4;18" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <text x="0" y="4" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="11" font-weight="700" fill="#0ea5e9">15d</text>
+  </g>
+</svg>

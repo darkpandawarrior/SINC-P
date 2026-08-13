@@ -9,6 +9,7 @@
 import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { dbAvailable, SKIP_REASON } from '@/test/db'
 import { pool, withoutTenantScope, withTenant } from '@/db/client'
 import { categories, grievanceEvents, grievances, handbookEntries, institutions, users } from '@/db/schema'
 import type { Actor } from '@/lib/grievance/policy'
@@ -28,7 +29,7 @@ import {
   withdrawGrievance,
 } from './service'
 
-describe('grievance service', () => {
+describe.skipIf(!dbAvailable)('grievance service', () => {
   const instA = randomUUID()
   const instB = randomUUID()
   const categoryId = randomUUID()

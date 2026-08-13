@@ -9,12 +9,13 @@
 import { randomUUID } from 'node:crypto'
 import { inArray } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { dbAvailable, SKIP_REASON } from '@/test/db'
 import { pool, withoutTenantScope } from '@/db/client'
 import { attachments, grievances, institutions, users } from '@/db/schema'
 import type { Actor } from '@/lib/grievance/policy'
 import { loadAuthorizedAttachment } from './route'
 
-describe('loadAuthorizedAttachment — the 2019 IDOR', () => {
+describe.skipIf(!dbAvailable)('loadAuthorizedAttachment — the 2019 IDOR', () => {
   const instA = randomUUID()
   const instB = randomUUID()
   const filingStudent = randomUUID()

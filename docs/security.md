@@ -49,7 +49,7 @@ against a live database, not reasoned about: the query returned rows from both t
 
 Since the entire argument for RLS here is "defence in depth against an application
 bug", a bypass reachable *from the application* was worth nothing. It is now
-`pg_has_role(current_user, 'sincp_admin', 'member')` — a property of the connection, not
+`pg_has_role(current_user, 'sincp_admin', 'member')`, a property of the connection, not
 of anything the application can set. The identical attack now returns zero rows.
 
 This is recorded because it is the interesting kind of finding: the code read correctly,
@@ -100,7 +100,7 @@ keys are sorted so that key order cannot change a hash.
 
 Enforcement is structural, not conventional: a `BEFORE UPDATE OR DELETE` trigger rejects
 mutation, and `UPDATE`/`DELETE` are revoked from both application roles. Verified firing
-as the table owner — running that test as the unprivileged role proves nothing, because
+as the table owner. Running that test as the unprivileged role proves nothing, because
 the `REVOKE` stops the statement before the trigger is reached.
 
 **What this buys:** a *partial* rewrite is detectable. A retro-edited remark or a removed
@@ -120,7 +120,7 @@ and this system does not make a legal-admissibility claim. Marketing copy that s
   transparently on next login.
 - **Server-side sessions.** The cookie carries a 32-byte random token; only its SHA-256
   is stored, so a database dump does not yield live sessions. Revocation is a `DELETE`,
-  which is what a stateless JWT could not give us — "disable this officer now" has to
+  which is what a stateless JWT could not give us. "Disable this officer now" has to
   mean now.
 - **Uniform failure.** Wrong password, unknown address, deactivated account and rate
   limit all return one message, and the unknown-address path still performs a hash so

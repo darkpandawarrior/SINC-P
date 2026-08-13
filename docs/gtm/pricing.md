@@ -5,10 +5,10 @@
 | Stage | Price | What it buys |
 |---|---|---|
 | Pilot | ₹75,000, one-time, scoped to 6 weeks | Full deployment on the college's infrastructure (or ours, their choice), data migration from their existing register/spreadsheet, SGRC and officer training, and a compliance-readiness report at the end. See `pilot-proposal.md` for the exact scope. |
-| Year 1 subscription | ₹1.5L–3L / year, priced per institution | Full product, all three pillars, unlimited users and grievances, one production deployment, the monthly compliance report, and support. |
+| Year 1 subscription | ₹1.5L-3L / year, priced per institution | Full product, all three pillars, unlimited users and grievances, one production deployment, the monthly compliance report, and support. |
 | Renewal | Same band, renegotiated at renewal against actual usage and headcount | No surprise step-function increases; the point of year 1 is to prove value at a price the college already budgeted for. |
 
-Where in the ₹1.5–3L band a given college lands depends on student count (1,000 vs 8,000
+Where in the ₹1.5 to 3L band a given college lands depends on student count (1,000 vs 8,000
 is a real difference in support load) and whether they want self-hosted or us-hosted. This
 is the one deliberately soft number in the whole document. It gets fixed per deal, not
 set by a formula, because the pilot conversation reveals which factors actually matter for
@@ -62,7 +62,7 @@ the price as a proxy for seriousness before they have evaluated a single feature
 - End-of-pilot compliance-readiness report: gaps found in their current SGRC process that
   the system now closes, framed for the Registrar to show upward.
 
-**Year 1 (₹1.5–3L/year):**
+**Year 1 (₹1.5 to 3L/year):**
 - Everything in the pilot, ongoing, no seat limits, no grievance-volume limits.
 - Monthly compliance report, generated and delivered, not a self-serve dashboard they have
   to remember to check. The sales motion here is "we hand you the report," not "here is
@@ -97,7 +97,7 @@ GFR-style public-tender rules. But almost every private college finance office r
 internal procurement policy modelled on the same idea: below some threshold, the Registrar
 or Principal can sanction a purchase directly; above it, the purchase needs three
 competitive quotations, a purchase committee, or full Trust/Board sign-off. That threshold
-varies by institution, commonly somewhere in the ₹1–2L range for a single-signature
+varies by institution, commonly somewhere in the ₹1 to 2L range for a single-signature
 sanction at a mid-size private college, though this is a pattern observed across deals,
 not a cited regulation, and must be confirmed with each buyer rather than assumed.
 
@@ -109,7 +109,7 @@ It removes the single biggest source of sales-cycle delay (waiting for a committ
 meet) at the exact stage where speed matters most, before the college has any reason yet
 to believe the product works.
 
-The year-1 renewal, at ₹1.5–3L, may cross that same threshold at some colleges. By the
+The year-1 renewal, at ₹1.5 to 3L, may cross that same threshold at some colleges. By the
 time that conversation happens, the pilot has already produced a compliance-readiness
 report the Registrar can carry into a committee meeting as justification, so the
 higher-friction approval path is timed to land only after there is already a concrete

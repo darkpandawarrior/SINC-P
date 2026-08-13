@@ -4,6 +4,7 @@
  */
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { dbAvailable, SKIP_REASON } from '@/test/db'
 import { pool, withoutTenantScope } from '@/db/client'
 import { institutions, users } from '@/db/schema'
 import { AuthError } from '@/lib/auth/session'
@@ -23,7 +24,7 @@ import {
   updateInstitutionSettings,
 } from './service'
 
-describe('admin service', () => {
+describe.skipIf(!dbAvailable)('admin service', () => {
   const inst = randomUUID()
   const admin = randomUUID()
   const moderator = randomUUID()
