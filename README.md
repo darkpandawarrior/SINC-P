@@ -182,28 +182,38 @@ accepts anything. Deflection is a feature, not a shortcut.
 
 ## Screens
 
-> **These are not committed yet, and I would rather say so than ship a README with broken image
-> links.** `npm run db:seed` builds 200 grievances across two institutions with realistic ages,
-> statuses and breach states, so every screen has genuine shape to photograph. It is the top item
-> on the [roadmap](#roadmap).
+![The officer queue, sorted by what breaches soonest](docs/screenshots/03-officer-queue.png)
 
-What you will see when you run it:
+*The queue sorts by what breaches soonest, never by newest, because "newest first" is how a case
+ages quietly into a violation.* Filters on status, category, assignee and SLA state, with bulk
+assign and move. Every status carries an icon as well as a colour, so the board still reads for a
+colour-blind warden.
 
-**The officer queue** sorts by what breaches soonest, never by newest, because "newest first" is
-how a case ages quietly into a violation. Filters on status, category, assignee and SLA state,
-with bulk assign and move.
+![A case, with its full hash-chained trail](docs/screenshots/04-case-view.png)
 
-**The case view** renders the full hash-chained trail as a timeline, with internal remarks visually
-distinct from student-visible ones so nobody guesses wrong about who can read what. The action
-panel offers only the transitions `canSetStatus` actually permits for that actor, so the UI never
-shows a button the server will reject.
+*The case view.* The trail is the hash chain rendered as a timeline. Internal remarks are visually
+marked so nobody guesses wrong about what the student can read, and the action panel offers only
+the transitions `canSetStatus` actually permits for this actor, so the interface never shows a
+button the server will refuse. The callout says tamper-evident rather than tamper-proof, which is
+the honest claim.
 
-**The compliance dashboard** is the screen that gets screenshotted into a NAAC self-study report:
-median resolution by category, breach counts, ageing buckets, appeal rate, CSV export and a print
-stylesheet that produces a clean A4 page.
+![Published closure times, with small cells suppressed](docs/screenshots/02-transparency.png)
 
-**The student portal** shows where a grievance actually is and what happens next, with the
-statutory deadline in plain language, and the option to withdraw, accept, or appeal.
+*The transparency page, which needs no login.* Median days to resolution per category, with any
+cell computed from fewer than five grievances withheld. Ragging and Harassment closes in a median
+of 4 days against 12 elsewhere, because that category carries a shorter statutory override. Charts
+are inline SVG with an accessible table underneath, no charting library, no external requests.
+
+| | |
+|---|---|
+| ![The student's own grievances](docs/screenshots/06-student-portal.png) | ![Filing a grievance](docs/screenshots/07-file-grievance.png) |
+| **The student portal.** Where each grievance actually is, and what happens next. | **Filing.** Matching handbook entries surface before the form accepts anything, because roughly a third of a campus complaint box is a question with a documented answer. |
+
+![The compliance dashboard](docs/screenshots/05-compliance.png)
+
+*The screen that gets screenshotted into a NAAC self-study report.* Median resolution by category,
+breach counts, ageing buckets, appeal rate, CSV export, and a print stylesheet that produces a
+clean A4 page.
 
 ## Architecture
 
@@ -480,7 +490,7 @@ answers to the ten objections that will genuinely come up.
 
 ## Roadmap
 
-- [ ] Screenshots and a flow GIF for this README
+- [ ] A flow GIF of one grievance end to end
 - [ ] Run the SMTP transport against a real college relay
 - [ ] Malware scanning before an upload becomes downloadable
 - [ ] Redis-backed rate limiting for multi-instance deployments

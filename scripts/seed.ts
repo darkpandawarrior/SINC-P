@@ -248,47 +248,85 @@ async function seedUsers(
 // Grievance content, cycled per category leaf
 // ---------------------------------------------------------------------------
 
-const TEMPLATES: Record<string, { subject: string; body: string }> = {
-  'Mess Food Quality': {
-    subject: 'Stale food served in mess for three consecutive days',
-    body: 'The dinner mess has served undercooked rice and watery dal since Monday. Several students in Block C reported stomach upset after Tuesday\'s dinner.',
-  },
-  'Room Allotment & Maintenance': {
-    subject: 'Room ceiling fan not working for two weeks',
-    body: 'Reported verbally to the warden on the 3rd with no action taken. Peak summer heat is making the room unusable at night.',
-  },
-  'Grade / Revaluation Dispute': {
-    subject: 'Marks not updated after revaluation',
-    body: 'Revaluation was applied for on the portal three weeks ago. The result still shows the original marks and the exam cell is not responding to emails.',
-  },
-  'Exam Scheduling Conflict': {
-    subject: 'Two end-semester papers scheduled in the same slot',
-    body: 'The published datesheet has two core papers scheduled for the same date and time slot, affecting the whole batch.',
-  },
-  'Fees & Scholarship': {
-    subject: 'Scholarship disbursement pending since last semester',
-    body: 'The scholarship was approved on the state portal in October but the institute has not adjusted it against the fee due, and a late fee is now being charged on top.',
-  },
-  Infrastructure: {
-    subject: 'Water leakage in the corridor near the physics lab',
-    body: 'Standing water near an exposed switchboard is a safety hazard. Reported to the estate office a week ago.',
-  },
-  'Ragging & Harassment': {
-    subject: 'Senior students calling first-years out of their rooms after curfew',
-    body: 'A group of second-year students has been summoning first-year hostel residents after 11pm. Filing anonymously out of concern for retaliation.',
-  },
-  Placement: {
-    subject: 'Placement cell did not share the interview shortlist on time',
-    body: 'The shortlist for the campus drive was published two hours after interviews began, and several eligible students missed their slot.',
-  },
-  Transport: {
-    subject: 'Institute bus route consistently 40 minutes late',
-    body: 'The evening bus to the city has been arriving 30-40 minutes late all week, making day scholars miss the last connecting bus home.',
-  },
-  Library: {
-    subject: 'Reference-section access card not working',
-    body: 'The RFID card for reference-only section access has stopped working since the system upgrade, and the help desk has no ETA.',
-  },
+/**
+ * Five distinct cases per category, not one repeated five times.
+ *
+ * The seed cycles categories, so a single template per category produced a queue of
+ * identical rows: five "Institute bus route consistently 40 minutes late" one after the
+ * other. It looked exactly like what it was, generated filler, and a demo whose data
+ * reads as fake undermines the screen it is meant to sell.
+ */
+const TEMPLATES: Record<string, Array<{ subject: string; body: string }>> = {
+  'Mess Food Quality': [
+    { subject: 'Stale food served in mess for three consecutive days', body: 'The dinner mess has served undercooked rice and watery dal since Monday. Several students in Block C reported stomach upset after Tuesday\'s dinner.' },
+    { subject: 'Insects found in the mess dal twice this week', body: 'Two separate students found insects in the dal on Tuesday and Thursday. Photographs were shown to the mess supervisor, who said the matter would be looked into.' },
+    { subject: 'Mess closes before the last lab batch is released', body: 'The evening lab runs until 8:30pm but the mess stops serving at 8:15pm. The batch has been missing dinner twice a week all semester.' },
+    { subject: 'No vegetarian option on non-veg days', body: 'On Wednesdays and Sundays the only protein served is chicken. Vegetarian students are left with rice and one dry sabzi.' },
+    { subject: 'Drinking water cooler in the mess has been dry for a fortnight', body: 'The cooler outside the mess hall has not worked since the start of the month. Students are refilling bottles from the washroom tap.' },
+  ],
+  'Room Allotment & Maintenance': [
+    { subject: 'Room ceiling fan not working for two weeks', body: 'Reported verbally to the warden on the 3rd with no action taken. Peak summer heat is making the room unusable at night.' },
+    { subject: 'Window latch broken on the ground floor', body: 'The window does not lock. The room is on the ground floor facing the road, and two laptops are kept in it.' },
+    { subject: 'Allotted a room already occupied by two students', body: 'The allotment letter lists Room 214, which already has two occupants. I have been sleeping in a friend\'s room for nine days.' },
+    { subject: 'Bathroom drain blocked on the third floor', body: 'Water has been standing in the common bathroom for over a week. The smell now reaches the corridor and two rooms next to it.' },
+    { subject: 'No electricity in the wing after the last storm', body: 'The wing lost power on Sunday night. The rest of the hostel was restored on Monday morning but this corridor is still dark.' },
+  ],
+  'Grade / Revaluation Dispute': [
+    { subject: 'Marks not updated after revaluation', body: 'Revaluation was applied for on the portal three weeks ago. The result still shows the original marks and the exam cell is not responding to emails.' },
+    { subject: 'Internal assessment marks missing for one subject', body: 'The portal shows a blank against internal assessment for the theory paper. The subject teacher confirms the marks were submitted.' },
+    { subject: 'Total does not match the sum of the sections', body: 'The answer script shows 14, 12 and 9 across the three sections but the total is entered as 31 instead of 35.' },
+    { subject: 'Revaluation fee deducted but no application recorded', body: 'The fee was paid on the portal and the receipt is available, but the exam cell has no record of a revaluation request against my roll number.' },
+    { subject: 'Grade awarded for a subject I never registered for', body: 'An F grade appears against an elective I did not opt for. My registration slip for the semester does not list it.' },
+  ],
+  'Exam Scheduling Conflict': [
+    { subject: 'Two end-semester papers scheduled in the same slot', body: 'The published datesheet has two core papers scheduled for the same date and time slot, affecting the whole batch.' },
+    { subject: 'Practical exam clashes with a compulsory theory paper', body: 'The lab exam and the theory paper for the same semester are both listed for Friday morning.' },
+    { subject: 'Datesheet changed four days before the exam', body: 'The revised datesheet moved the paper forward by a week with no announcement beyond a notice board update.' },
+    { subject: 'Backlog paper scheduled during regular semester exams', body: 'The re-exam for a previous semester falls on the same afternoon as a current-semester paper.' },
+    { subject: 'Exam hall allotment not published the night before', body: 'The seating list was still not up at 11pm before a 9am paper, and the department office was closed.' },
+  ],
+  'Fees & Scholarship': [
+    { subject: 'Scholarship disbursement pending since last semester', body: 'The scholarship was approved on the state portal in October but the institute has not adjusted it against the fee due, and a late fee is now being charged on top.' },
+    { subject: 'Late fee charged despite an approved fee waiver', body: 'The waiver was sanctioned by the department but the accounts portal still shows the full amount and a penalty accruing weekly.' },
+    { subject: 'Hostel fee debited twice from the same account', body: 'Two identical debits appear on the same date. The bank statement has been submitted to the accounts section with no response for a month.' },
+    { subject: 'No fee receipt issued after an offline payment', body: 'The payment was made by demand draft in July. There is still no receipt on the portal and the dues page shows the amount as outstanding.' },
+    { subject: 'Caution deposit not refunded after course completion', body: 'The refund was due at the end of the final semester. Six months on there is no refund and no explanation.' },
+  ],
+  Infrastructure: [
+    { subject: 'Water leakage in the corridor near the physics lab', body: 'Standing water near an exposed switchboard is a safety hazard. Reported to the estate office a week ago.' },
+    { subject: 'Lift in the academic block out of service for a month', body: 'The only lift has been out since the start of term. A classmate on crutches is carried up three floors daily.' },
+    { subject: 'Broken tiles on the main walkway after the rain', body: 'Several tiles have lifted near the library entrance. Two students have tripped there in the last week.' },
+    { subject: 'No lighting on the path between the hostel and the gate', body: 'The stretch has been unlit since the poles were replaced. It is the route students take back after evening classes.' },
+    { subject: 'Projector in the lecture hall has been dead all semester', body: 'The hall is used for four courses. Slides are being read out from a laptop screen at the front of the room.' },
+  ],
+  'Ragging & Harassment': [
+    { subject: 'Senior students calling first-years out of their rooms after curfew', body: 'A group of second-year students has been summoning first-year hostel residents after 11pm. Filing anonymously out of concern for retaliation.' },
+    { subject: 'Repeated unwanted messages from a senior after being asked to stop', body: 'The messages have continued for three weeks after a clear request to stop. Screenshots are available and can be shared with the committee only.' },
+    { subject: 'First-years made to do errands as a condition of being left alone', body: 'A group has been assigning errands to first-years in the hostel wing, framed as tradition. Several are afraid to refuse.' },
+    { subject: 'Comments about a student\'s home state in a group chat', body: 'A batch group chat has repeated remarks about one student\'s home state and language. The student has stopped attending the group activity.' },
+    { subject: 'Blocked from entering the common room by a senior batch', body: 'First-years are being turned away from the hostel common room after 9pm by a group of seniors who say it is theirs.' },
+  ],
+  Placement: [
+    { subject: 'Placement cell did not share the interview shortlist on time', body: 'The shortlist for the campus drive was published two hours after interviews began, and several eligible students missed their slot.' },
+    { subject: 'Eligibility criteria changed after applications closed', body: 'The CGPA cutoff was raised after the application window shut, disqualifying students who had already applied.' },
+    { subject: 'Company visit cancelled with no notice to registered students', body: 'Students travelled back from home for the drive. The cancellation was posted only on an internal noticeboard.' },
+    { subject: 'Offer letter not released two months after selection', body: 'The company confirmed selection in writing. The placement cell has not followed up and calls are not being returned.' },
+    { subject: 'Students with backlogs excluded without the rule being published', body: 'A backlog rule was applied at the shortlisting stage although it appears nowhere in the placement policy circulated at the start of the year.' },
+  ],
+  Transport: [
+    { subject: 'Institute bus route consistently 40 minutes late', body: 'The evening bus to the city has been arriving 30-40 minutes late all week, making day scholars miss the last connecting bus home.' },
+    { subject: 'Morning bus skips two stops without notice', body: 'The 7:40 service has skipped the two stops before the campus gate for the past fortnight, leaving students to arrange their own transport.' },
+    { subject: 'Bus pass charged for a route that was discontinued', body: 'The route was withdrawn in the second week of term but the pass for the full semester was already collected.' },
+    { subject: 'Overcrowding on the single evening service', body: 'One bus now serves what used to be two departures. Students stand for the entire forty minute journey.' },
+    { subject: 'No transport arranged for the Saturday lab batch', body: 'The Saturday batch finishes at 5pm with no institute bus after 3pm on weekends.' },
+  ],
+  Library: [
+    { subject: 'Reference-section access card not working', body: 'The RFID card for reference-only section access has stopped working since the system upgrade, and the help desk has no ETA.' },
+    { subject: 'Fine charged for a book returned on time', body: 'The book was returned at the counter on the due date and stamped. The portal shows it as returned four days later with a fine.' },
+    { subject: 'Prescribed textbook has one copy for the whole batch', body: 'The course lists the book as essential reading. The library holds a single reference copy that cannot be issued.' },
+    { subject: 'Library closes early during the exam period', body: 'Reading room hours were cut to 6pm in the week before end-semester exams, when they are needed most.' },
+    { subject: 'Journal subscription lapsed mid-project', body: 'Access to the journal cited in three final-year project proposals was withdrawn without notice.' },
+  ],
 }
 
 // ---------------------------------------------------------------------------
@@ -382,7 +420,10 @@ async function seedGrievances(
 
   for (const [i, bucket] of FULL_PLAN.entries()) {
     const leaf = leaves[i % leaves.length]!
-    const template = TEMPLATES[leaf.name]!
+    const variants = TEMPLATES[leaf.name]!
+    // i cycles the categories, so integer-dividing by their count gives the pass number:
+    // pass 0 takes variant 0, pass 1 takes variant 1, and so on.
+    const template = variants[Math.floor(i / leaves.length) % variants.length]!
     const student = people.students[i % people.students.length]!
     const officer = people.officers[i % people.officers.length]!
     const sla = leaf.slaResolutionDays

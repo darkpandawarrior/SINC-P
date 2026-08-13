@@ -9,7 +9,8 @@ import { MAX_BYTES } from '@/lib/storage/local'
 import { requireStudentActor } from '../../_lib/actor'
 import { CsrfField } from '@/components/CsrfField'
 import { buildCategoryTree, type CategoryTreeNode } from './category-tree'
-import { MAX_ATTACHMENTS, submitGrievanceAction } from './actions'
+import { submitGrievanceAction } from './actions'
+import { MAX_ATTACHMENTS } from './limits'
 
 function formatMb(bytes: number): string {
   return `${Math.round(bytes / (1024 * 1024))} MB`

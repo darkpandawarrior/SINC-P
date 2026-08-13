@@ -13,10 +13,9 @@ import { isCsrfValid } from '@/lib/auth/csrf'
 import { addAttachment, submitGrievance } from '@/lib/grievance/service'
 import { storage, StorageError } from '@/lib/storage/local'
 import { requireStudentActor } from '../../_lib/actor'
+import { MAX_ATTACHMENTS } from './limits'
 
-// A student attaching evidence to a hostel/mess/exam complaint rarely needs more than a
-// couple of photos or a PDF; this caps a bulk-upload mistake, not a legitimate case.
-export const MAX_ATTACHMENTS = 3
+
 
 function friendlyError(err: unknown): string {
   if (err instanceof ZodError) return 'Please check the required fields and try again.'
