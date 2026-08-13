@@ -9,6 +9,7 @@ function mk(overrides: Partial<Category> & Pick<Category, 'id' | 'name'>): Categ
     description: null,
     slaResolutionDays: null,
     isSensitive: false,
+    track: 'sgrc',
     sortOrder: 0,
     isActive: true,
     ...overrides,

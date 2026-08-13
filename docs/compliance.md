@@ -99,7 +99,8 @@ and [Ramanujan College's Criterion 5 documentation](https://ramanujancollege.ac.
 
 **The important word is "including".** 5.1.4 explicitly names sexual harassment and
 ragging, which are governed by different laws with different committees and different
-timelines. A system that handles only the general SGRC flow does not fully evidence 5.1.4.
+timelines. A system that handles only the general SGRC flow does not fully evidence 5.1.4,
+which is why all three now exist as separate statutory tracks rather than as categories.
 
 ---
 
@@ -114,20 +115,41 @@ Regulation 7 requires an inquiry to be **completed within ninety days**, and a c
 to be filed within three months of the incident
 ([analysis](https://blog.ipleaders.in/ugc-prevention-prohibition-and-redressal-of-sexual-harassment-of-women-employees-and-students-in-higher-education-institutions-regulation-2015-an-analysis/)).
 
-### Status: NOT MET, and it must not be faked
+### Status: built, with the confidentiality enforced rather than promised
 
-SINC-P routes everything through the SGRC. A PoSH complaint is a different regime: a
-different committee, a 90-day statutory inquiry, and confidentiality obligations that a
-general staff queue actively violates. Putting a sexual harassment complaint into a queue
-that moderators and multiple officers can read is worse than having no system.
+A PoSH complaint is a different regime, so it is a different **track** rather than a
+category with a flag. `grievances.track` is one of `sgrc`, `icc` or `anti_ragging`, and
+the track decides who may see the case at all, before any per-record question is asked.
 
-**Until ICC routing exists, the honest deployment guidance is that SINC-P must not be
-offered as the PoSH channel.** The `Ragging & Harassment` category exists and is marked
-sensitive, which shortens its clock and bypasses triage, but that is not an ICC process
-and the documentation should never imply that it is.
+For `icc` the answer is: the Internal Complaints Committee, and nobody else.
 
-This is the single largest compliance gap in the product and it is on the roadmap as a
-first-class item, not a nice-to-have.
+| Role | Sees an ICC case |
+|---|---|
+| `icc_member` | Yes |
+| `moderator` | **No.** The triage queue is the one place it must never appear |
+| `institution_admin` | **No.** Being the Registrar is a system administration role, not membership of that committee |
+| `redressal_officer` | **No**, even when assigned |
+| `ombudsperson` | **No** |
+| The student who filed it | Yes, their own |
+
+Two places enforce this, because they fail differently:
+
+- `canView` gates a record once you hold one.
+- `accessibleTracks` builds the `WHERE` clause for every list query. A per-record check
+  does not protect a list endpoint: without this, the officer queue would hand a moderator
+  every ICC complaint in the institution. That is the bug this function exists to prevent
+  and it has its own test.
+
+The clock is ninety **calendar** days, from Regulation 7. The 2023 working-day rule does
+not apply here because that clause does not say working.
+
+The seed creates two ICC cases and an `icc_member`, so the claim can be tested rather than
+believed: sign in as the committee member and see them, then sign in as the moderator, the
+Registrar or the Ombudsperson and see nothing.
+
+**Still not built:** the ICC's own inquiry workflow (statements, witnesses, findings) and
+the three-month filing limit. What exists is confidential routing on the correct clock,
+which is the part that was actively dangerous to omit.
 
 ---
 

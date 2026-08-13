@@ -41,10 +41,10 @@ export function allowedTransitions(from: Status): readonly Status[] {
 
 /** Which roles may drive a grievance into a given status. */
 const TRANSITION_ROLES: Partial<Record<Status, readonly Role[]>> = {
-  under_review: ['moderator', 'redressal_officer', 'institution_admin'],
-  in_progress: ['redressal_officer', 'ombudsperson', 'institution_admin'],
-  resolved: ['redressal_officer', 'ombudsperson', 'institution_admin'],
-  rejected: ['moderator', 'redressal_officer', 'institution_admin'],
+  under_review: ['moderator', 'redressal_officer', 'institution_admin', 'icc_member'],
+  in_progress: ['redressal_officer', 'ombudsperson', 'institution_admin', 'icc_member'],
+  resolved: ['redressal_officer', 'ombudsperson', 'institution_admin', 'icc_member'],
+  rejected: ['moderator', 'redressal_officer', 'institution_admin', 'icc_member'],
   // Only the student who filed it may close (accept the resolution) or withdraw.
   closed: ['student'],
   withdrawn: ['student'],
@@ -55,8 +55,50 @@ const STAFF_ROLES: readonly Role[] = [
   'moderator',
   'redressal_officer',
   'ombudsperson',
+  'icc_member',
   'institution_admin',
 ]
+
+export type Track = Grievance['track']
+
+/**
+ * Who may see a track at all, before any per-record question is asked.
+ *
+ * `icc` is the reason this exists. A sexual harassment complaint under the PoSH Act 2013
+ * and the UGC 2015 Regulations is confidential to the Internal Complaints Committee. A
+ * moderator triaging the general queue must never see one, and neither must the Registrar
+ * simply for being the Registrar: `institution_admin` is a system administration role,
+ * not a member of that committee.
+ *
+ * This is deliberately a hard gate rather than a filter. Filters get forgotten on the
+ * next screen someone adds.
+ */
+const TRACK_ROLES: Record<Track, readonly Role[]> = {
+  sgrc: ['moderator', 'redressal_officer', 'ombudsperson', 'institution_admin'],
+  // No moderator. No institution_admin. Committee only.
+  icc: ['icc_member'],
+  anti_ragging: ['moderator', 'redressal_officer', 'ombudsperson', 'institution_admin'],
+}
+
+/** True when this actor's role is permitted to see this statutory track at all. */
+export function canAccessTrack(role: Role, track: Track): boolean {
+  if (role === 'student') return true // ownership is checked separately
+  return TRACK_ROLES[track].includes(role)
+}
+
+export const ALL_TRACKS = Object.keys(TRACK_ROLES) as Track[]
+
+/**
+ * The tracks a role may see, for building a SQL WHERE clause.
+ *
+ * `canView` protects a record once you hold it. A list query never holds one: it builds
+ * a WHERE clause and returns whatever matches, so without this the officer queue would
+ * hand a moderator every ICC complaint in the institution. Per-record checks do not
+ * protect list endpoints, and that is the bug this function exists to prevent.
+ */
+export function accessibleTracks(role: Role): Track[] {
+  return ALL_TRACKS.filter((t) => canAccessTrack(role, t))
+}
 
 export function isStaff(role: Role): boolean {
   return STAFF_ROLES.includes(role)
@@ -79,6 +121,10 @@ export function canView(actor: Actor, grievance: Grievance): boolean {
 
   if (actor.role === 'student') return grievance.submittedById === actor.id
 
+  // Track before record. A staff member who cannot see this regime cannot see this
+  // grievance, whatever their role would otherwise allow.
+  if (!canAccessTrack(actor.role, grievance.track)) return false
+
   // A moderator screens the queue, so sees everything. An officer sees what is assigned
   // to them plus anything unassigned they could pick up. The Ombudsperson sees appeals.
   switch (actor.role) {
@@ -93,6 +139,9 @@ export function canView(actor: Actor, grievance: Grievance): boolean {
         grievance.appealOfId !== null ||
         grievance.assignedToId === actor.id
       )
+    case 'icc_member':
+      // The gate above already restricted this to the icc track.
+      return true
     default:
       return false
   }

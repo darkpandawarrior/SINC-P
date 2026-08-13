@@ -5,6 +5,7 @@ import {
   canSetStatus,
   canTransition,
   canView,
+  accessibleTracks,
   canViewInternalRemarks,
   isOpen,
   isStaff,
@@ -34,6 +35,7 @@ const grievance = (over: Partial<Grievance> = {}): Grievance =>
     isAnonymous: false,
     categoryId: 'c-1',
     kind: 'grievance',
+    track: 'sgrc',
     subject: 's',
     body: 'b',
     status: 'submitted',
@@ -187,5 +189,75 @@ describe('helpers', () => {
     expect(isOpen('closed')).toBe(false)
     expect(isOpen('withdrawn')).toBe(false)
     expect(isOpen('rejected')).toBe(false)
+  })
+})
+
+describe('statutory tracks and ICC confidentiality', () => {
+  const icc = (over: Partial<Grievance> = {}) => grievance({ track: 'icc', ...over })
+
+  it('hides an ICC case from the moderator who triages everything else', () => {
+    // The moderator is otherwise unrestricted, which is exactly why this needs a test.
+    // Under the PoSH Act the complaint is confidential to the committee, and a triage
+    // queue is the one place it must never appear.
+    expect(canView(actor('moderator', 'mod-1'), icc())).toBe(false)
+    expect(canView(actor('moderator', 'mod-1'), grievance())).toBe(true)
+  })
+
+  it('hides an ICC case from the institution admin', () => {
+    // Being the Registrar is a system administration role, not membership of the
+    // Internal Complaints Committee.
+    expect(canView(actor('institution_admin', 'adm-1'), icc())).toBe(false)
+  })
+
+  it('hides an ICC case from a redressal officer, even when assigned', () => {
+    expect(canView(actor('redressal_officer', OFFICER), icc({ assignedToId: OFFICER }))).toBe(false)
+  })
+
+  it('hides an ICC case from the Ombudsperson', () => {
+    expect(canView(actor('ombudsperson', 'omb-1'), icc({ status: 'appealed' }))).toBe(false)
+  })
+
+  it('shows an ICC case to a committee member', () => {
+    expect(canView(actor('icc_member', 'icc-1'), icc())).toBe(true)
+  })
+
+  it('does not let a committee member into the general queue', () => {
+    // The gate runs both ways. ICC membership is not a wildcard.
+    expect(canView(actor('icc_member', 'icc-1'), grievance())).toBe(false)
+    expect(canView(actor('icc_member', 'icc-1'), grievance({ track: 'anti_ragging' }))).toBe(false)
+  })
+
+  it('still lets the student who filed it see their own ICC case', () => {
+    expect(canView(actor('student', STUDENT), icc({ submittedById: STUDENT }))).toBe(true)
+    expect(canView(actor('student', OTHER_STUDENT), icc({ submittedById: STUDENT }))).toBe(false)
+  })
+
+  it('blocks a non-member from acting on an ICC case', () => {
+    expect(canSetStatus(actor('moderator', 'mod-1'), icc(), 'under_review')).toEqual({
+      ok: false,
+      reason: 'not-visible',
+    })
+  })
+
+  it('lets a committee member act on an ICC case', () => {
+    expect(canSetStatus(actor('icc_member', 'icc-1'), icc(), 'under_review')).toEqual({ ok: true })
+  })
+
+  it('reports the tracks each role may query, for the list WHERE clause', () => {
+    // canView protects a record once you hold it. A list query never holds one, so this
+    // is what stops the officer queue handing a moderator every ICC complaint.
+    expect(accessibleTracks('moderator')).toEqual(['sgrc', 'anti_ragging'])
+    expect(accessibleTracks('institution_admin')).toEqual(['sgrc', 'anti_ragging'])
+    expect(accessibleTracks('icc_member')).toEqual(['icc'])
+    expect(accessibleTracks('redressal_officer')).not.toContain('icc')
+    expect(accessibleTracks('ombudsperson')).not.toContain('icc')
+  })
+
+  it('never returns an empty track list for a staff role', () => {
+    // An empty list compiles to `false` in the WHERE clause, which would silently show a
+    // role nothing at all rather than failing loudly.
+    for (const r of ['moderator', 'redressal_officer', 'ombudsperson', 'icc_member', 'institution_admin'] as const) {
+      expect(accessibleTracks(r).length).toBeGreaterThan(0)
+    }
   })
 })

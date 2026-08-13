@@ -64,6 +64,7 @@ interface InstitutionSeed {
   moderator: string
   officers: string[]
   ombudsperson: string
+  iccMember: string
   admin: string
 }
 
@@ -77,6 +78,7 @@ const INSTITUTIONS: InstitutionSeed[] = [
     moderator: 'Anjali Rao',
     officers: ['Suresh Iyer', 'Kavita Desai'],
     ombudsperson: 'Dr. Ramesh Chandran',
+    iccMember: 'Dr. Latha Menon',
     admin: 'Meera Joshi',
   },
   {
@@ -88,6 +90,7 @@ const INSTITUTIONS: InstitutionSeed[] = [
     moderator: 'Pooja Menon',
     officers: ['Manoj Pillai', 'Ritu Agarwal'],
     ombudsperson: 'Dr. Sunil Bhatia',
+    iccMember: 'Dr. Farida Qureshi',
     admin: 'Deepa Krishnan',
   },
 ]
@@ -100,6 +103,8 @@ interface CategoryDef {
   name: string
   isSensitive?: boolean
   slaResolutionDays?: number
+  /** Which statutory regime a filing under this category enters. */
+  track?: 'sgrc' | 'icc' | 'anti_ragging'
   children?: string[]
 }
 
@@ -113,7 +118,10 @@ const CATEGORY_TREE: CategoryDef[] = [
   { name: 'Infrastructure' },
   // Bypasses moderator triage in the timeline below and carries a short SLA — this is
   // the category the whole "genuinely breached" demo grievance leans on.
-  { name: 'Ragging & Harassment', isSensitive: true, slaResolutionDays: 5 },
+  { name: 'Ragging & Harassment', isSensitive: true, slaResolutionDays: 5, track: 'anti_ragging' },
+  // Its own regime, not a category of the general queue. Filing here makes the case
+  // visible ONLY to the Internal Complaints Committee, on a ninety-day clock.
+  { name: 'Sexual Harassment (ICC)', isSensitive: true, track: 'icc' },
   { name: 'Placement' },
   { name: 'Transport' },
   { name: 'Library' },
@@ -123,6 +131,7 @@ interface Leaf {
   id: string
   name: string
   isSensitive: boolean
+  track: 'sgrc' | 'icc' | 'anti_ragging'
   slaResolutionDays: number
 }
 
@@ -136,6 +145,7 @@ async function seedCategories(tx: Tx, institutionId: string, institutionSlaDays:
         institutionId,
         name: def.name,
         isSensitive: def.isSensitive ?? false,
+        track: def.track ?? 'sgrc',
         slaResolutionDays: def.slaResolutionDays ?? null,
       })
       .returning()
@@ -146,6 +156,7 @@ async function seedCategories(tx: Tx, institutionId: string, institutionSlaDays:
         id: parent.id,
         name: parent.name,
         isSensitive: parent.isSensitive,
+        track: parent.track,
         slaResolutionDays: parent.slaResolutionDays ?? institutionSlaDays,
       })
       continue
@@ -159,6 +170,7 @@ async function seedCategories(tx: Tx, institutionId: string, institutionSlaDays:
           parentId: parent.id,
           name: childName,
           isSensitive: def.isSensitive ?? false,
+          track: def.track ?? 'sgrc',
           slaResolutionDays: def.slaResolutionDays ?? null,
         })
         .returning()
@@ -167,6 +179,7 @@ async function seedCategories(tx: Tx, institutionId: string, institutionSlaDays:
         id: child.id,
         name: child.name,
         isSensitive: child.isSensitive,
+        track: child.track,
         slaResolutionDays: child.slaResolutionDays ?? institutionSlaDays,
       })
     }
@@ -190,6 +203,7 @@ interface SeededPeople {
   moderator: SeededPerson
   officers: SeededPerson[]
   ombudsperson: SeededPerson
+  iccMember: SeededPerson
   admin: SeededPerson
 }
 
@@ -239,9 +253,10 @@ async function seedUsers(
   const officers: SeededPerson[] = []
   for (const name of seed.officers) officers.push(await create(name, 'redressal_officer', null))
   const ombudsperson = await create(seed.ombudsperson, 'ombudsperson', null)
+  const iccMember = await create(seed.iccMember, 'icc_member', null)
   const admin = await create(seed.admin, 'institution_admin', null)
 
-  return { students, moderator, officers, ombudsperson, admin }
+  return { students, moderator, officers, ombudsperson, iccMember, admin }
 }
 
 // ---------------------------------------------------------------------------
@@ -431,6 +446,108 @@ const SYSTEMIC_BURST: Array<{ subject: string; body: string }> = [
   { subject: 'Block C water problem not fixed', body: 'The water supply problem in Block C hostel has still not been fixed. The tank is empty every morning.' },
 ]
 
+/**
+ * Two ICC cases, written with the restraint the subject deserves.
+ *
+ * They exist so a reviewer can log in as the committee member and see them, then log in
+ * as the moderator, the Registrar and the Ombudsperson and see nothing. That contrast is
+ * the whole point of the track, and a claim about confidentiality is worth more when you
+ * can try to break it than when a README asserts it.
+ *
+ * Both are filed anonymously, which is the realistic default here.
+ */
+async function seedIccCases(
+  tx: Tx,
+  institutionId: string,
+  seed: InstitutionSeed,
+  leaves: Leaf[],
+  people: SeededPeople,
+  startIndex: number,
+): Promise<void> {
+  const leaf = leaves.find((l) => l.track === 'icc')
+  if (!leaf) return
+
+  const now = new Date()
+  const cases = [
+    {
+      subject: 'Complaint regarding conduct of a faculty member',
+      body: 'Filing a complaint about repeated inappropriate remarks during lab hours. Requesting that this be handled by the Internal Complaints Committee and kept confidential.',
+      daysAgo: 12,
+    },
+    {
+      subject: 'Complaint under the PoSH policy',
+      body: 'Reporting conduct by a senior staff member that has continued after being asked to stop. I would like to give a statement to the committee directly.',
+      daysAgo: 40,
+    },
+  ]
+
+  for (const [i, c] of cases.entries()) {
+    const createdAt = new Date(now.getTime() - c.daysAgo * DAY_MS)
+    // Ninety calendar days, per Regulation 7 of the UGC 2015 Regulations.
+    const dueAt = new Date(createdAt.getTime() + 90 * DAY_MS)
+    const student = people.students[i % people.students.length]!
+
+    const [row] = await tx
+      .insert(grievances)
+      .values({
+        institutionId,
+        reference: `${seed.refPrefix}-${now.getFullYear()}-${String(startIndex + i + 1).padStart(5, '0')}`,
+        submittedById: student.id,
+        isAnonymous: true,
+        categoryId: leaf.id,
+        kind: 'grievance',
+        track: 'icc',
+        subject: c.subject,
+        body: c.body,
+        status: 'in_progress',
+        assignedToId: people.iccMember.id,
+        dueAt,
+        createdAt,
+        updatedAt: createdAt,
+      })
+      .returning()
+    if (!row) throw new Error('seedIccCases: insert returned no row')
+
+    const drafts: EventDraft[] = [
+      {
+        type: 'submitted',
+        actorId: student.id,
+        actorRole: 'student',
+        remark: null,
+        payload: { track: 'icc' },
+        visibility: 'public',
+        createdAt,
+      },
+      {
+        type: 'assigned',
+        actorId: people.iccMember.id,
+        actorRole: 'icc_member',
+        remark: 'Received by the Internal Complaints Committee.',
+        payload: { assigneeId: people.iccMember.id },
+        visibility: 'internal',
+        createdAt: new Date(createdAt.getTime() + DAY_MS),
+      },
+    ]
+
+    for (const e of chainEvents(row.id, drafts)) {
+      await tx.insert(grievanceEvents).values({
+        institutionId,
+        grievanceId: e.grievanceId,
+        seq: e.seq,
+        type: e.type,
+        actorId: e.actorId,
+        actorRole: e.actorRole,
+        remark: e.remark,
+        visibility: e.visibility,
+        payload: e.payload,
+        prevHash: e.prevHash,
+        hash: e.hash,
+        createdAt: e.createdAt,
+      })
+    }
+  }
+}
+
 async function seedSystemicBurst(
   tx: Tx,
   institutionId: string,
@@ -510,6 +627,11 @@ async function seedSystemicBurst(
   }
 }
 
+/**
+ * The general queue only. ICC cases never go through the bulk generator: they are a
+ * different statutory regime, they are confidential to one committee, and treating them
+ * as filler to pad a demo would be exactly the wrong instinct about what they are.
+ */
 async function seedGrievances(
   tx: Tx,
   institutionId: string,
@@ -518,9 +640,10 @@ async function seedGrievances(
   people: SeededPeople,
 ): Promise<void> {
   const now = new Date()
+  const generalLeaves = leaves.filter((l) => l.track === 'sgrc' || l.track === 'anti_ragging')
 
   for (const [i, bucket] of FULL_PLAN.entries()) {
-    const leaf = leaves[i % leaves.length]!
+    const leaf = generalLeaves[i % generalLeaves.length]!
     const variants = TEMPLATES[leaf.name]!
     // i cycles the categories, so integer-dividing by their count gives the pass number:
     // pass 0 takes variant 0, pass 1 takes variant 1, and so on.
@@ -871,6 +994,7 @@ async function main() {
         const people = await seedUsers(tx, id, seed, passwordHash)
         await seedGrievances(tx, id, seed, leaves, people)
         await seedSystemicBurst(tx, id, seed, leaves, people, FULL_PLAN.length)
+        await seedIccCases(tx, id, seed, leaves, people, FULL_PLAN.length + 8)
         await seedAnnouncements(tx, id, people.admin.id, seed)
         await seedHandbook(tx, id, leaves)
       })

@@ -9,5 +9,6 @@ export const ROLE_LABELS: Record<Role, string> = {
   moderator: 'Moderator',
   redressal_officer: 'Redressal Officer',
   ombudsperson: 'Ombudsperson',
+  icc_member: 'ICC Member',
   institution_admin: 'Institution Admin',
 }

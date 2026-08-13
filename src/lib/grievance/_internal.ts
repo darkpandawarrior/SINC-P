@@ -6,7 +6,7 @@
  * not part of the public surface. Call sites import from `./service`, which re-exports
  * only the operations. The underscore prefix is the reminder.
  */
-import { and, desc, eq, isNotNull, isNull, or, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { type Tx } from '@/db/client'
 import {
@@ -24,6 +24,7 @@ import {
   type Role,
   type Status,
   type TransitionDenial,
+  accessibleTracks,
 } from './policy'
 import { isUniqueViolation } from './reference'
 
@@ -241,20 +242,36 @@ export async function appendEvent(
  * function. Keep this in sync with canView in policy.ts if that ever changes shape.
  */
 export function roleScopeCondition(actor: Actor) {
+  if (actor.role === 'student') return eq(grievances.submittedById, actor.id)
+
+  // Statutory track first, and it is ANDed into every branch below rather than being one
+  // more case. A moderator is otherwise unrestricted, so forgetting this here is exactly
+  // how every ICC complaint in the institution ends up in the general queue.
+  const tracks = accessibleTracks(actor.role)
+  if (tracks.length === 0) return sql`false`
+  const trackScope = inArray(grievances.track, tracks)
+
   switch (actor.role) {
-    case 'student':
-      return eq(grievances.submittedById, actor.id)
     case 'moderator':
     case 'institution_admin':
-      return undefined // no extra restriction beyond institution
+      return trackScope
     case 'redressal_officer':
-      return or(eq(grievances.assignedToId, actor.id), isNull(grievances.assignedToId))
-    case 'ombudsperson':
-      return or(
-        eq(grievances.status, 'appealed'),
-        isNotNull(grievances.appealOfId),
-        eq(grievances.assignedToId, actor.id),
+      return and(
+        trackScope,
+        or(eq(grievances.assignedToId, actor.id), isNull(grievances.assignedToId)),
       )
+    case 'ombudsperson':
+      return and(
+        trackScope,
+        or(
+          eq(grievances.status, 'appealed'),
+          isNotNull(grievances.appealOfId),
+          eq(grievances.assignedToId, actor.id),
+        ),
+      )
+    case 'icc_member':
+      // trackScope already narrows this to the icc track.
+      return trackScope
     default:
       return sql`false`
   }

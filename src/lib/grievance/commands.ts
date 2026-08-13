@@ -80,12 +80,21 @@ export async function submitGrievance(actor: Actor, input: SubmitGrievanceInput)
     }
 
     const now = new Date()
-    const dueAt = computeDueAt(now, {
-      institutionSlaDays: institution.slaResolutionDays,
-      categorySlaDays: category.slaResolutionDays,
-      // The UGC clause counts working days. See the note on the schema column.
-      mode: institution.slaUseWorkingDays ? 'working' : 'calendar',
-    })
+    // The category decides which statutory regime this grievance belongs to, and the
+    // regime decides both the clock and who may ever see it.
+    const track = category.track
+
+    const dueAt =
+      track === 'icc'
+        ? // Regulation 7 of the UGC 2015 Regulations: the ICC inquiry completes within
+          // ninety days. Calendar days, because that clause does not say working.
+          computeDueAt(now, { institutionSlaDays: institution.slaIccInquiryDays, mode: 'calendar' })
+        : computeDueAt(now, {
+            institutionSlaDays: institution.slaResolutionDays,
+            categorySlaDays: category.slaResolutionDays,
+            // The UGC 2023 clause counts working days. See the note on the schema column.
+            mode: institution.slaUseWorkingDays ? 'working' : 'calendar',
+          })
 
     // ponytail: the reference year uses the server's UTC calendar year, not the IST one
     // sla.ts is careful to compute in. A grievance filed in the ~5.5h UTC/IST gap
@@ -109,6 +118,7 @@ export async function submitGrievance(actor: Actor, input: SubmitGrievanceInput)
           subject: parsed.subject,
           body: parsed.body,
           status: 'submitted',
+          track,
           dueAt,
           createdAt: now,
           updatedAt: now,

@@ -35,6 +35,7 @@ export const ROLE_LABEL: Record<User['role'], string> = {
   moderator: 'Moderator',
   redressal_officer: 'Redressal Officer',
   ombudsperson: 'Ombudsperson',
+  icc_member: 'ICC Member',
   institution_admin: 'Institution Admin',
 }
 

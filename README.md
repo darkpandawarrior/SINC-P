@@ -471,12 +471,20 @@ omitted. The short version:
 **Built:** the UGC 2023 grievance flow end to end, statutory clocks, the Ombudsperson
 appeal tier, published disclosures, a tamper-evident record.
 
-**Not built, and it matters:** sexual harassment complaints are governed by the PoSH Act
-2013 and the UGC 2015 Regulations, which require a separate Internal Complaints Committee
-and a ninety-day inquiry, with confidentiality a shared staff queue actively breaks.
-SINC-P routes everything through the SGRC, so **it must not be offered as the PoSH
-channel** until ICC routing exists. NAAC 5.1.4 explicitly says *including sexual
-harassment and ragging cases*, so the product cannot fully evidence 5.1.4 today.
+**Three statutory tracks, not one queue.** NAAC 5.1.4 says *including sexual harassment
+and ragging cases*, and those are governed by different laws with different committees. So
+`grievances.track` is `sgrc`, `icc` or `anti_ragging`, and the track decides who may see a
+case **at all**, before any per-record question is asked.
+
+For an ICC case under the PoSH Act 2013, the answer is the Internal Complaints Committee
+and nobody else: not the moderator who triages everything, not the Registrar, not the
+Ombudsperson. Enforced in two places because they fail differently. `canView` gates a
+record once you hold one; `accessibleTracks` builds the `WHERE` clause for every list
+query, because a per-record check does not protect a list endpoint and without it the
+officer queue would hand a moderator every ICC complaint in the institution.
+
+The seed creates two ICC cases and a committee member, so you can try to break it rather
+than believe it.
 
 Reading the regulation also found a bug. The clause says the SGRC reports *"preferably
 within a period of **15 working days**"*
@@ -569,10 +577,11 @@ to do. Only running it tells you what it does.
 - **Rate limiting.** Real, with two stores. In-process memory by default, and a shared
   Postgres store (`RATE_LIMIT_STORE=postgres`) for when a second app container appears.
 - **Screenshots in this README: not captured yet.**
-- **PoSH / ICC routing: not built.** See [compliance.md](docs/compliance.md). The product
-  must not be sold as the sexual harassment channel until it is.
-- **Anti-Ragging Committee as a distinct statutory body: not built.** The category exists
-  with a short clock and a triage bypass, which is not the same thing.
+- **PoSH / ICC routing.** Built, and the confidentiality is enforced in two places rather
+  than promised. The committee's own inquiry workflow (statements, witnesses, findings) is
+  not built. See [compliance.md](docs/compliance.md).
+- **Anti-Ragging Committee as a distinct statutory body: partial.** The track exists with
+  a short clock and a triage bypass. The committee and squad workflow do not.
 - **Retention, per-student erasure and breach notification: not built.** All three are
   DPDP obligations on the institution running this.
 - **A paying customer, or a pilot, or a design partner: none.** This is the artefact you take
@@ -606,7 +615,7 @@ recoverable. Losing one is not.
 ## Testing and quality
 
 ```bash
-npm test              # 219 unit and integration
+npm test              # 263 unit and integration
 npm run test:e2e      # 8 steps through a real browser (needs the app running)
 npm run audit         # fails on a high or critical advisory
 npm run typecheck     # strict, noUncheckedIndexedAccess
@@ -653,7 +662,7 @@ answers to the ten objections that will genuinely come up.
 ## Roadmap
 
 - [ ] A flow GIF of one grievance end to end
-- [ ] ICC / PoSH routing as a separate confidential regime, the largest compliance gap
+- [ ] The ICC's own inquiry workflow: statements, witnesses, findings, the 3-month filing limit
 - [ ] Anti-Ragging Committee and squad workflow, plus a link to antiragging.in
 - [ ] Retention policy, per-student erasure, and breach notification for DPDP
 - [ ] e-Samadhaan reconciliation, so UGC-forwarded complaints match internal cases

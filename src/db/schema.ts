@@ -45,6 +45,7 @@ export const userRole = pgEnum('user_role', [
   'moderator', // triages inbound, screens abuse, routes to an officer
   'redressal_officer', // SGRC member who actually resolves
   'ombudsperson', // hears appeals against SGRC decisions
+  'icc_member', // Internal Complaints Committee, PoSH Act 2013 / UGC 2015 Regulations
   'institution_admin', // manages users, categories, SLA config for one institution
 ])
 
@@ -82,6 +83,23 @@ export const eventType = pgEnum('event_type', [
   'sla_breached',
   'withdrawn',
 ])
+
+/**
+ * Which statutory regime a grievance belongs to.
+ *
+ * These are not categories. They are separate legal processes with separate committees,
+ * separate clocks and, critically, separate confidentiality rules:
+ *
+ *   sgrc          UGC (Redressal of Grievances of Students) Regulations, 2023
+ *   icc           PoSH Act 2013 + UGC 2015 Regulations. 90-day inquiry, and visible ONLY
+ *                 to the Internal Complaints Committee. A moderator triaging a queue must
+ *                 never see one of these, which is why it is a track rather than a flag.
+ *   anti_ragging  UGC Regulations on Curbing the Menace of Ragging, 2009
+ *
+ * Putting an ICC complaint into the general queue is worse than having no system, because
+ * the student was promised confidentiality by the act that compelled the committee.
+ */
+export const grievanceTrack = pgEnum('grievance_track', ['sgrc', 'icc', 'anti_ragging'])
 
 export const notificationStatus = pgEnum('notification_status', ['pending', 'sent', 'failed'])
 
@@ -121,6 +139,11 @@ export const institutions = pgTable(
     slaUseWorkingDays: boolean('sla_use_working_days').notNull().default(true),
     slaAppealWindowDays: integer('sla_appeal_window_days').notNull().default(15),
     slaOmbudspersonDays: integer('sla_ombudsperson_days').notNull().default(30),
+    /**
+     * Regulation 7 of the UGC 2015 Regulations requires an ICC inquiry to be completed
+     * within ninety days. Calendar days: the clause does not say working.
+     */
+    slaIccInquiryDays: integer('sla_icc_inquiry_days').notNull().default(90),
 
     /** Students may file without revealing identity to the committee. */
     allowAnonymous: boolean('allow_anonymous').notNull().default(true),
@@ -211,6 +234,8 @@ export const categories = pgTable(
     slaResolutionDays: integer('sla_resolution_days'),
     /** Ragging/harassment categories bypass triage and page the officer directly. */
     isSensitive: boolean('is_sensitive').notNull().default(false),
+    /** Filing under this category puts the grievance on that statutory track. */
+    track: grievanceTrack('track').notNull().default('sgrc'),
     sortOrder: integer('sort_order').notNull().default(0),
     isActive: boolean('is_active').notNull().default(true),
   },
@@ -239,6 +264,8 @@ export const grievances = pgTable(
 
     categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
     kind: grievanceKind('kind').notNull().default('grievance'),
+    /** The statutory regime. Determines who may see this at all. */
+    track: grievanceTrack('track').notNull().default('sgrc'),
     subject: text('subject').notNull(),
     body: text('body').notNull(),
 
