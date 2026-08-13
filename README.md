@@ -19,13 +19,13 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 ![Postgres](https://img.shields.io/badge/Postgres_17-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Drizzle](https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=flat-square&logo=drizzle&logoColor=black)
 ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-260-success?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-271-success?style=flat-square)
 ![Coverage](https://img.shields.io/badge/coverage-73%25-success?style=flat-square)
 ![Tenant isolation](https://img.shields.io/badge/tenant_isolation-Postgres_RLS-0f766e?style=flat-square)
 ![UGC](https://img.shields.io/badge/UGC_Grievance_Regs-2023-0ea5e9?style=flat-square)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-64748b?style=flat-square)](LICENSE)
 
-**[Why](#why-sinc-p)** · **[Highlights](#highlights)** · **[What changed](#what-changed-since-2019)** · **[Screens](#screens)** · **[Design](#two-registers-one-system)** · **[AI and agents](#the-2026-layer-ai-and-agents)** · **[Architecture](#architecture)** · **[Getting started](#getting-started)** · **[Compliance](#compliance-cited)** · **[Prove it](#prove-it-yourself)** · **[Honesty](#whats-real-and-what-isnt-honestly)**
+**[Why](#why-sinc-p)** · **[Highlights](#highlights)** · **[What changed](#what-changed-since-2019)** · **[Screens](#screens)** · **[Docs](#documentation)** · **[Design](#two-registers-one-system)** · **[AI and agents](#the-2026-layer-ai-and-agents)** · **[Architecture](#architecture)** · **[Getting started](#getting-started)** · **[Compliance](#compliance-cited)** · **[Prove it](#prove-it-yourself)** · **[Honesty](#whats-real-and-what-isnt-honestly)**
 
 **Portfolio:** [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/) &nbsp;·&nbsp; **Origin:** final-year project, MANIT Bhopal, 2019 &nbsp;·&nbsp; **Siblings:** [Mileway](https://github.com/darkpandawarrior/Mileway) · [PaymentsLab](https://github.com/darkpandawarrior/PaymentsLab) · [Kursi](https://github.com/darkpandawarrior/Kursi)
 
@@ -59,12 +59,13 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 - [Security posture](#security-posture)
 - [Commercial material](#commercial-material)
 - [Roadmap](#roadmap)
+- [Documentation](#documentation)
 - [Credits](#credits)
 
 </details>
 
-> **At a glance.** **25 routes** across five role-scoped areas · **10 tables**, every tenant row
-> under `FORCE ROW LEVEL SECURITY` · **260 tests** at 73% coverage, plus an 8-step browser journey ·
+> **At a glance.** **25 routes** across five role-scoped areas · **12 tables**, 11 of them tenant-scoped
+> under `FORCE ROW LEVEL SECURITY` · **271 tests** at 73% coverage, plus an 8-step browser journey ·
 > a hash-chained audit trail re-verified on every seed run · **one command** that proves tenant
 > isolation actually fires instead of asking you to believe it.
 
@@ -396,7 +397,7 @@ function, which they did not always do (see [bug #2](#three-bugs-that-only-runni
 
 ```
 src/
-  db/schema.ts          10 tables; every tenant row carries institutionId
+  db/schema.ts          12 tables; every tenant row carries institutionId
   db/client.ts          withTenant(), the only door into tenant data
   lib/grievance/
     policy.ts           authorisation and the state machine, in one file on purpose
@@ -684,6 +685,24 @@ The 2019 original was **Siddharth Pandalai**, **Nashit Shayan Khan**, **Nalin Gu
 Thomas**, at MANIT Bhopal. The idea, the three pillars and the escalation ladder in the SRS are
 theirs. Aage kya karoge? Turns out: this. The 2019 code has been entirely replaced, but the
 project it was trying to be is what got built.
+
+
+## Documentation
+
+| | |
+|---|---|
+| [architecture.md](docs/architecture.md) | Why the boundaries sit where they do, and what breaks if you move them |
+| [glossary.md](docs/glossary.md) | SGRC, ICC, IQAC, NAAC, AISHE, PoSH, DPDP. Read this first if the domain is new |
+| [compliance.md](docs/compliance.md) | Every regulatory requirement, with a link on each claim and the gaps named |
+| [security.md](docs/security.md) | Threat model, verified evidence, eight open gaps |
+| [design-language.md](docs/design-language.md) | The two registers, tokens, motion rules, and how to add a screen |
+| [testing.md](docs/testing.md) | Three tiers, what is deliberately untested, and why |
+| [operations/runbook.md](docs/operations/runbook.md) | For whoever is on the phone when it breaks |
+| [migration-from-2019.md](docs/migration-from-2019.md) | Construct by construct, and the data path |
+| [decisions/](docs/decisions/) | ADR-0001 product and architecture, ADR-0002 what AI may do |
+| [verification/](docs/verification/) | Evidence that the guards fire, and the script that proves it |
+| [gtm/](docs/gtm/) | Positioning, pricing, targeting, outreach, objections, market |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, house rules, the four things not to break |
 
 ## Licence
 

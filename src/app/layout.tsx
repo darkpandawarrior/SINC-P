@@ -11,6 +11,14 @@ export const metadata: Metadata = {
   title: 'SINC-P — Grievance Redressal',
   description:
     'Statutory grievance redressal for Indian higher education institutions, built to UGC (Redressal of Grievances of Students) Regulations.',
+  // SVG rather than a PNG set: one file, sharp at every size, and no binary in the repo.
+  icons: { icon: '/icon.svg' },
+  openGraph: {
+    title: 'SINC-P — Grievance Redressal',
+    description:
+      'Time-bound resolution against a statutory clock, an Ombudsperson appeal tier, and a tamper-evident record of every step.',
+    images: ['/opengraph-image.svg'],
+  },
 }
 
 /**

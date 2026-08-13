@@ -10,7 +10,7 @@ import { dbAvailable } from '@/test/db'
 import { pool, withTenant, withoutTenantScope } from '@/db/client'
 import { categories, institutions, notifications, users } from '@/db/schema'
 import { hashPassword } from '@/lib/auth/password'
-import { assignGrievance, submitGrievance, transitionStatus } from './service'
+import { assignGrievance, fileAppeal, submitGrievance, transitionStatus } from './service'
 import type { Actor } from './policy'
 
 const SLUG = `notify-wire-${Date.now()}`
@@ -23,6 +23,7 @@ describe.skipIf(!dbAvailable)('notification wiring', () => {
   let officerId = ''
   let studentEmail = ''
   let officerEmail = ''
+  let ombudspersonEmail = ''
 
   beforeAll(async () => {
     const hash = await hashPassword('notify-wiring-password')
@@ -33,7 +34,10 @@ describe.skipIf(!dbAvailable)('notification wiring', () => {
         .returning()
       instId = inst!.id
 
-      const mk = async (role: 'student' | 'moderator' | 'redressal_officer', local: string) => {
+      const mk = async (
+        role: 'student' | 'moderator' | 'redressal_officer' | 'ombudsperson',
+        local: string,
+      ) => {
         const [u] = await tx
           .insert(users)
           .values({
@@ -49,6 +53,8 @@ describe.skipIf(!dbAvailable)('notification wiring', () => {
       const s = await mk('student', 'student')
       const m = await mk('moderator', 'moderator')
       const o = await mk('redressal_officer', 'officer')
+      const omb = await mk('ombudsperson', 'ombudsperson')
+      ombudspersonEmail = omb.email
       studentEmail = s.email
       officerEmail = o.email
       officerId = o.id
@@ -183,5 +189,33 @@ describe.skipIf(!dbAvailable)('notification wiring', () => {
     )
     expect(rows.length).toBeGreaterThan(0)
     for (const r of rows) expect(r.institutionId).toBe(instId)
+  })
+
+  it('tells the Ombudsperson when a student appeals', async () => {
+    // The statutory appeal tier is a right the regulation gives the student. If nobody
+    // is told, it is a queue nobody watches and the 30-day clock runs regardless.
+    const g = await submitGrievance(student, {
+      categoryId,
+      kind: 'grievance',
+      subject: 'Grade dispute',
+      body: 'Revaluation result never appeared.',
+    })
+    await transitionStatus(moderator, g.id, 'under_review', 'Screened.')
+    await transitionStatus(moderator, g.id, 'in_progress', 'Taken up.')
+    await transitionStatus(moderator, g.id, 'resolved', 'No change on review.')
+
+    const result = await fileAppeal(student, g.id, {
+      body: 'The decision does not address the marks discrepancy I described.',
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const queued = await withTenant(instId, (tx) =>
+      tx.select().from(notifications).where(eq(notifications.grievanceId, result.appeal.id)),
+    )
+    const appealNotices = queued.filter((q) => q.kind === 'appeal_filed')
+    expect(appealNotices).toHaveLength(1)
+    expect(appealNotices[0]!.recipientEmail).toBe(ombudspersonEmail)
+    expect(appealNotices[0]!.subject).toContain(result.appeal.reference)
   })
 })

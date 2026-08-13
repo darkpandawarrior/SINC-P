@@ -443,6 +443,41 @@ export async function fileAppeal(
         visibility: 'public',
       })
 
+      // Tell the Ombudsperson. Without this the statutory appeal tier is a queue nobody
+      // is watching: the student has exercised a right the regulation gives them and the
+      // only person who can act on it finds out by chance.
+      const [inst] = await tx
+        .select({ name: institutions.name })
+        .from(institutions)
+        .where(eq(institutions.id, actor.institutionId))
+        .limit(1)
+      const ombudspersons = await tx
+        .select({ id: users.id, email: users.email })
+        .from(users)
+        .where(
+          and(
+            eq(users.institutionId, actor.institutionId),
+            eq(users.role, 'ombudsperson'),
+            eq(users.isActive, true),
+          ),
+        )
+
+      if (inst) {
+        const rendered = tpl.appealFiled(appeal, original, inst)
+        for (const person of ombudspersons) {
+          await enqueue(tx, {
+            institutionId: actor.institutionId,
+            recipientUserId: person.id,
+            recipientEmail: person.email,
+            kind: 'appeal_filed',
+            grievanceId: appeal.id,
+            subject: rendered.subject,
+            body: rendered.body,
+            dedupeKey: tpl.dedupeKeyFor('appeal_filed', appeal.id, person.id),
+          })
+        }
+      }
+
       return {
         ok: true,
         original: toActorView(actor, updatedOriginal),
