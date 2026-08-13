@@ -25,7 +25,10 @@ docker run -d --name "$CONTAINER" \
 until docker exec "$CONTAINER" pg_isready -U sincp >/dev/null 2>&1; do sleep 1; done
 
 echo "==> applying schema"
-DATABASE_URL="postgres://sincp:sincp@localhost:$PORT/sincp" \
+# DATABASE_MIGRATION_URL, not DATABASE_URL: drizzle.config.ts reads the migration URL
+# first, so setting only DATABASE_URL here pushed the schema at whatever the developer's
+# .env.local pointed to, and this throwaway database stayed empty.
+DATABASE_MIGRATION_URL="postgres://sincp:sincp@localhost:$PORT/sincp" \
   npx --prefix "$ROOT" drizzle-kit push --force >/dev/null
 
 echo "==> applying RLS policies"

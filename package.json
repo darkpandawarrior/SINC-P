@@ -2,7 +2,7 @@
   "name": "sinc-p",
   "version": "2.0.0",
   "private": true,
-  "description": "SINC-P — statutory grievance redressal and campus communications for Indian higher education.",
+  "description": "SINC-P \u2014 statutory grievance redressal and campus communications for Indian higher education.",
   "engines": {
     "node": ">=22.0.0"
   },
@@ -12,7 +12,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
-    "test": "vitest run",
+    "test": "vitest run --exclude 'tests/e2e/**'",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "db:push": "drizzle-kit push && npm run db:rls && npm run db:check-rls",
@@ -24,11 +24,13 @@
     "db:up": "docker compose up -d db && node scripts/wait-for-db.mjs",
     "db:rls": "node scripts/apply-rls.mjs",
     "db:check-rls": "node scripts/check-rls.mjs",
-    "notify:send": "tsx --env-file-if-exists=.env.local scripts/send-notifications.ts"
+    "notify:send": "tsx --env-file-if-exists=.env.local scripts/send-notifications.ts",
+    "audit": "npm audit --audit-level=high",
+    "test:e2e": "vitest run tests/e2e"
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "drizzle-orm": "^0.44.7",
+    "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.27.0",
     "next": "16.3.0",
     "pg": "^8.16.3",

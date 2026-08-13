@@ -468,6 +468,23 @@ export const notifications = pgTable(
   ],
 )
 
+/**
+ * Rate-limit counters. Deliberately NOT a tenant table, and deliberately not under RLS.
+ *
+ * The keys are an IP address or an email, both of which exist before anyone knows which
+ * institution the request belongs to (that is the entire point of limiting a login).
+ * There is no `institutionId` to scope by, and the rows hold no grievance data, no
+ * names and no message content: a key, a count, and an expiry.
+ *
+ * `check-rls.mjs` does not list this table for the same reason. If a future column ever
+ * carries tenant data, it belongs in a different table rather than here.
+ */
+export const rateLimits = pgTable('rate_limits', {
+  key: varchar('key', { length: 200 }).primaryKey(),
+  count: integer('count').notNull().default(0),
+  resetAt: timestamp('reset_at', { withTimezone: true }).notNull(),
+})
+
 export type Institution = typeof institutions.$inferSelect
 export type User = typeof users.$inferSelect
 export type Category = typeof categories.$inferSelect

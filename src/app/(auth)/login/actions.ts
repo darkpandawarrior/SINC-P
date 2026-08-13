@@ -47,7 +47,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const ip = await clientIp()
   const userAgent = await requestUserAgent()
 
-  if (!checkLoginRateLimit(ip, email)) {
+  if (!(await checkLoginRateLimit(ip, email))) {
     await logAuthEvent({
       institutionId: null,
       userId: null,

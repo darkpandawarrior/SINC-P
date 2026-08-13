@@ -188,9 +188,11 @@ Ordered by how much they would worry a real deployment.
 1. **No malware scanning on uploads.** A clean PDF that is nonetheless malicious will be
    stored and served to staff. ClamAV before the file becomes downloadable is the fix,
    and it is not built.
-2. **Rate limiting is in-process memory.** It resets on restart and does not coordinate
-   across instances. Correct for a single-node college deployment, insufficient behind a
-   load balancer. Needs Redis.
+2. **Rate limiting defaults to in-process memory.** It resets on restart and does not
+   coordinate across instances. A shared Postgres store exists behind
+   `RATE_LIMIT_STORE=postgres` and is what a multi-instance deployment should set. The
+   default is memory because the single-container deployment is the common case and it
+   costs nothing.
 3. **No SSO.** Institutions with existing identity infrastructure will ask for SAML or
    OIDC. There is a seam for it, not an implementation. This was the council's most
    divided architectural question and is the decision most likely to be revisited.
@@ -201,7 +203,10 @@ Ordered by how much they would worry a real deployment.
 6. **Pool-reuse tenant inheritance is argued, not directly tested.** The transaction-local
    setting and the fail-closed no-context case are both verified, but there is no test
    that specifically hammers a reused pooled connection across tenants.
-7. **No automated dependency scanning** in CI.
+7. **Dependency scanning** runs in CI and fails on high or critical advisories. Moderate
+   and low are reported without blocking, deliberately: a blocking gate on every moderate
+   advisory in a build tool trains people to add ignore entries, which is worse than the
+   advisory. Four moderate advisories are open at the time of writing.
 8. **Attachment retention and legal hold are undefined.** DPDP expects a deletion story;
    there is currently no expiry job.
 

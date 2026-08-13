@@ -19,7 +19,7 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 ![Postgres](https://img.shields.io/badge/Postgres_17-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Drizzle](https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=flat-square&logo=drizzle&logoColor=black)
 ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-215-success?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-227-success?style=flat-square)
 ![Coverage](https://img.shields.io/badge/coverage-73%25-success?style=flat-square)
 ![Tenant isolation](https://img.shields.io/badge/tenant_isolation-Postgres_RLS-0f766e?style=flat-square)
 ![UGC](https://img.shields.io/badge/UGC_Grievance_Regs-2023-0ea5e9?style=flat-square)
@@ -61,7 +61,7 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 </details>
 
 > **At a glance.** **25 routes** across five role-scoped areas · **10 tables**, every tenant row
-> under `FORCE ROW LEVEL SECURITY` · **215 tests** at 73% coverage ·
+> under `FORCE ROW LEVEL SECURITY` · **227 tests** at 73% coverage, plus an 8-step browser journey ·
 > a hash-chained audit trail re-verified on every seed run · **one command** that proves tenant
 > isolation actually fires instead of asking you to believe it.
 
@@ -128,6 +128,11 @@ buys the audit trail; the students show up for the scoreboard.
   type, a size cap enforced while streaming rather than after buffering, opaque storage keys
   outside the web root, and authorisation re-checked on every download. The 2019 version wrote
   `$_FILES` straight into a web-served folder under the user's own filename.
+- 🚦 **Rate limiting that survives a second instance.** Counters live in Postgres, not
+  Redis, because Redis is one more thing for a college IT admin to install and fail to
+  restart, and the deployment story is already the second most likely way this dies. A
+  rate-limit check is one indexed upsert; the concurrency test fires ten simultaneous
+  hits at one key and asserts exactly four get through a budget of four.
 - 📬 **A transactional outbox, not fire-and-forget email.** A queued message is written in
   the same transaction as the thing that caused it, so a rolled-back status change cannot
   tell a student their case moved. Delivery happens out of band, which keeps SMTP latency
@@ -423,8 +428,8 @@ to do. Only running it tells you what it does.
   with a dedupe key, five attempts, then dead-lettered. Not yet run against a real relay.
 - **SSO: not built.** There is a seam for OIDC, nothing behind it.
 - **Malware scanning on uploads: not built.**
-- **Rate limiting.** Real, but in-process memory. Correct for one node, insufficient behind a
-  load balancer.
+- **Rate limiting.** Real, with two stores. In-process memory by default, and a shared
+  Postgres store (`RATE_LIMIT_STORE=postgres`) for when a second app container appears.
 - **Screenshots in this README: not captured yet.**
 - **A paying customer, or a pilot, or a design partner: none.** This is the artefact you take
   to the first Registrar conversation, not evidence that the conversation went well.
@@ -457,7 +462,9 @@ recoverable. Losing one is not.
 ## Testing and quality
 
 ```bash
-npm test              # 215 tests
+npm test              # 219 unit and integration
+npm run test:e2e      # 8 steps through a real browser (needs the app running)
+npm run audit         # fails on a high or critical advisory
 npm run typecheck     # strict, noUncheckedIndexedAccess
 npm run db:check-rls  # asserts RLS is enabled, forced, and policied
 ```
@@ -466,6 +473,12 @@ Most run anywhere. About a quarter talk to a real Postgres deliberately, because
 append-only trigger and cross-tenant behaviour are database behaviour and a mock of them would
 assert nothing at all. Without a database those suites **skip with a message naming the command to
 run**, so a fresh clone never greets you with five red files.
+
+`npm run test:e2e` drives a real browser through the whole thing: public pages without a
+session, a protected route redirecting, an officer signing in, the queue ordered by breach
+urgency, a status change appearing as a new link in the chain, and a student unable to reach
+the officer console. Three of this repository's past bugs would have been caught there and
+nowhere else, because all three type-checked and passed every other test.
 
 Worth calling out: the illegal-transition matrix, a student trying to act on another student's
 grievance, chain integrity across a full lifecycle, the concurrent-append retry, small-cell
@@ -482,7 +495,12 @@ in CI, and undefined attachment retention.
 
 ## Commercial material
 
-[`docs/gtm/`](docs/gtm/) carries the parts that are not code: ICP and positioning, pricing
+[`docs/gtm/`](docs/gtm/) carries the parts that are not code: a twelve-question
+[audit-readiness self-check](docs/gtm/audit-readiness-checklist.md) written to be useful
+whether or not anyone ever buys this, a [targeting method](docs/gtm/target-list.md) built on
+public NAAC and AISHE data rather than an invented list of names,
+[first-touch messages](docs/gtm/outreach.md) that ask for a conversation instead of a demo,
+plus ICP and positioning, pricing
 (₹75,000 scoped pilot rising to ₹1.5L to ₹3L a year, priced per institution and never per
 grievance, because per-grievance pricing pays a college to suppress filings), a 90 day launch plan
 with explicit kill criteria, a pilot proposal a Registrar could actually sign, and straight
@@ -493,7 +511,6 @@ answers to the ten objections that will genuinely come up.
 - [ ] A flow GIF of one grievance end to end
 - [ ] Run the SMTP transport against a real college relay
 - [ ] Malware scanning before an upload becomes downloadable
-- [ ] Redis-backed rate limiting for multi-instance deployments
 - [ ] OIDC and SAML through the existing seam
 - [ ] `pgcrypto` field-level encryption on grievance bodies
 - [ ] Retention and legal-hold policy for attachments

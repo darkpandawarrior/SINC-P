@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
 
+# A second push to the same branch cancels the first. Nothing here is worth paying for
+# twice, and a queued run on stale code tells you nothing.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -25,12 +31,9 @@ jobs:
           --health-retries 10
 
     env:
-      DATABASE_URL: postgres://sincp:sincp@localhost:5432/sincp
+      # Migrations only. This role owns the schema and, because the postgres image
+      # creates POSTGRES_USER as a superuser, it bypasses RLS unconditionally.
       DATABASE_MIGRATION_URL: postgres://sincp:sincp@localhost:5432/sincp
-      # Same owner connection as above — CI has no separate sincp_app role, so there is
-      # nothing to scope down to. See docker-compose.yml for the production version of
-      # this tradeoff.
-      DATABASE_ADMIN_URL: postgres://sincp:sincp@localhost:5432/sincp
       SESSION_SECRET: ci-only-secret-not-used-for-anything-real
       NODE_ENV: test
 
@@ -53,15 +56,61 @@ jobs:
 
       - run: npm run lint
 
-      # Tests exercise withTenant()/RLS against a real database, so schema + policies
-      # have to exist before `npm test`. CI runs as the owner role throughout — there
-      # is no separate sincp_app user here, which is fine: RLS is enforced by the
-      # policy's institution_id check, not by which role is connected.
       - name: Apply schema and row-level security policies
         run: |
           npx drizzle-kit push --force
           psql "$DATABASE_MIGRATION_URL" -v ON_ERROR_STOP=1 -f drizzle/0001_rls.sql
 
-      - run: npm test
+      # The tests must run as the same restricted role production uses.
+      #
+      # This job used to connect as the owner throughout, which quietly made every
+      # tenant-isolation assertion vacuous: the postgres image creates POSTGRES_USER as a
+      # SUPERUSER, and a superuser bypasses RLS whatever the policies say. The suite went
+      # green because the application layer also filters by institutionId, so the second
+      # line of defence was never actually under test in CI.
+      #
+      # drizzle/0001_rls.sql created sincp_app and sincp_admin above, so point the app at
+      # them now that they exist.
+      - name: Connect as the restricted runtime role
+        run: |
+          echo "DATABASE_URL=postgres://sincp_app:sincp_app_dev_only@localhost:5432/sincp" >> "$GITHUB_ENV"
+          echo "DATABASE_ADMIN_URL=postgres://sincp_admin:sincp_admin_dev_only@localhost:5432/sincp" >> "$GITHUB_ENV"
+
+      - name: Assert RLS is actually on
+        run: npm run db:check-rls
+
+      # Proves the guards fire rather than merely exist: per-tenant visibility,
+      # fail-closed with no tenant context, IDOR by explicit UUID, the privileged-role
+      # escape hatch, append-only enforcement, and tenant erasure.
+      - name: Verify tenant isolation end to end
+        run: ./docs/verification/run.sh
+        env:
+          PORT: 55432
+
+      - run: npm run test:coverage
 
       - run: npm run build
+
+  audit:
+    runs-on: ubuntu-latest
+    # Advisories land on their own schedule, not ours. A new critical in a transitive
+    # dependency should fail the build on the next push even when nothing changed.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install -g npm@12
+      - run: npm ci
+
+      # High and critical fail. Moderate and low are reported and do not block: this is
+      # a self-hosted server-side app with no untrusted client bundle, and a blocking
+      # gate on every moderate prototype-pollution advisory in a build tool trains people
+      # to add ignore entries, which is worse than the advisory.
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Report moderate and low advisories
+        if: always()
+        run: npm audit --audit-level=low || true
