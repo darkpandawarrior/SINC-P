@@ -90,7 +90,7 @@ export default async function DisclosuresPage() {
   const slaOverrides = cats.filter((c) => c.slaResolutionDays !== null)
 
   return (
-    <div className="flex flex-col gap-8">
+    <div data-surface="public" className="flex flex-col gap-8">
       <section className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-fg">Statutory Disclosures — {institution.name}</h1>
         <p className="max-w-2xl text-fg-muted">

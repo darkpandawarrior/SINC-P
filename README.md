@@ -25,7 +25,7 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 ![UGC](https://img.shields.io/badge/UGC_Grievance_Regs-2023-0ea5e9?style=flat-square)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-64748b?style=flat-square)](LICENSE)
 
-**[Why](#why-sinc-p)** · **[Highlights](#highlights)** · **[What changed](#what-changed-since-2019)** · **[Screens](#screens)** · **[AI and agents](#the-2026-layer-ai-and-agents)** · **[Architecture](#architecture)** · **[Getting started](#getting-started)** · **[Compliance](#compliance-cited)** · **[Prove it](#prove-it-yourself)** · **[Honesty](#whats-real-and-what-isnt-honestly)**
+**[Why](#why-sinc-p)** · **[Highlights](#highlights)** · **[What changed](#what-changed-since-2019)** · **[Screens](#screens)** · **[Design](#two-registers-one-system)** · **[AI and agents](#the-2026-layer-ai-and-agents)** · **[Architecture](#architecture)** · **[Getting started](#getting-started)** · **[Compliance](#compliance-cited)** · **[Prove it](#prove-it-yourself)** · **[Honesty](#whats-real-and-what-isnt-honestly)**
 
 **Portfolio:** [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/) &nbsp;·&nbsp; **Origin:** final-year project, MANIT Bhopal, 2019 &nbsp;·&nbsp; **Siblings:** [Mileway](https://github.com/darkpandawarrior/Mileway) · [PaymentsLab](https://github.com/darkpandawarrior/PaymentsLab) · [Kursi](https://github.com/darkpandawarrior/Kursi)
 
@@ -41,6 +41,7 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 - [What changed since 2019](#what-changed-since-2019)
 - [The three pillars, and their honest depth](#the-three-pillars-and-their-honest-depth)
 - [Screens](#screens)
+- [Two registers, one system](#two-registers-one-system)
 - [The 2026 layer: AI and agents](#the-2026-layer-ai-and-agents)
 - [Architecture](#architecture)
   - [Tenancy, in four layers](#tenancy-in-four-layers)
@@ -228,6 +229,46 @@ are inline SVG with an accessible table underneath, no charting library, no exte
 *The screen that gets screenshotted into a NAAC self-study report.* Median resolution by category,
 breach counts, ageing buckets, appeal rate, CSV export, and a print stylesheet that produces a
 clean A4 page.
+
+## Two registers, one system
+
+This product has two audiences who need opposite things from the same screens.
+
+A Registrar working forty cases before an accreditation visit needs calm, dense and
+printable. Vibrance there is noise, and noise costs them accuracy. A nineteen-year-old
+filing at 11pm about a hostel with no water needs to believe somebody will read it, and
+institutional grey tells them exactly what every other college portal already has: that
+this is a form that goes nowhere.
+
+So there are two registers over one token set. The officer console keeps the calm palette.
+The public and student surfaces opt into a warmer one with `data-surface="public"`. Same
+contrast floors, same status colours (red still means overdue everywhere), different
+emotional weight.
+
+**What is actually in there:**
+
+- **A colour field behind the hero**, three blurred radial gradients drifting on a 26
+  second loop. No image to download, nothing for the CSP to block, and it scales to any
+  viewport without a second asset.
+- **Native view transitions** via `@view-transition`, so navigation cross-fades with zero
+  JavaScript and degrades to nothing where unsupported.
+- **A command palette** on `⌘K`, because the officer console's real user opens it forty
+  times a day and knows where they are going. It navigates and toggles the theme. It
+  cannot change a grievance: a keyboard shortcut that resolves a case eventually resolves
+  the wrong one.
+- **The SLA ring**, pure SVG with a `stroke-dasharray`. It renders identically in a Server
+  Component, in a print stylesheet, and with scripting off, and it pulses when a case is
+  overdue. The label is not decorative, because colour alone would fail anyone with a
+  colour vision deficiency on the one question that matters most.
+- **Staggered table rows**, so a queue reads as arriving rather than flashing.
+- **Live numbers on the landing page**, computed from the institution's own record with
+  the same small-cell suppression the transparency page uses. A friendlier surface must
+  not be a looser one.
+
+Every animation is decoration over a layout that already works. Strip the whole motion
+layer and the page still renders, still submits, and still reads correctly in a screen
+reader. `prefers-reduced-motion` collapses all of it, including the view transitions,
+because a vestibular disorder is not a preference setting.
 
 ## The 2026 layer: AI and agents
 

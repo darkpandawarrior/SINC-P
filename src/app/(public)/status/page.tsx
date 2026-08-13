@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function StatusPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div data-surface="public" className="flex flex-col gap-6">
       <section className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-fg">Check a grievance&apos;s status</h1>
         <p className="max-w-2xl text-fg-muted">

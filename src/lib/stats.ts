@@ -199,3 +199,46 @@ export async function getTransparencyStats(institutionId: string): Promise<Trans
     trend: computeTrend(rows),
   }
 }
+
+export interface PublicSummary {
+  totalFiled: number
+  /** Null when too few grievances have been resolved to publish a median. */
+  medianDays: number | null
+  /** Percentage resolved inside the statutory window, or null when suppressed. */
+  withinWindowPct: number | null
+}
+
+/**
+ * Headline figures for the public landing page.
+ *
+ * Same suppression rule as the transparency page, applied to the same denominators. The
+ * landing page is a friendlier surface than `/transparency` and that must not make it a
+ * looser one: an institution with three resolved grievances shows a dash on both.
+ */
+export async function getPublicSummary(): Promise<PublicSummary | null> {
+  const institution = await getPublicInstitution()
+  if (!institution) return null
+
+  const stats = await getTransparencyStats(institution.id)
+
+  const resolvedMedians = stats.categories
+    .map((c) => c.medianResolutionDays)
+    .filter((v): v is number => v !== null)
+
+  // Median of the published category medians rather than of raw rows: any category
+  // below the threshold has already been withheld, so this cannot reconstitute a
+  // suppressed cell by aggregating around it.
+  const median =
+    resolvedMedians.length === 0
+      ? null
+      : [...resolvedMedians].sort((a, b) => a - b)[Math.floor(resolvedMedians.length / 2)]!
+
+  return {
+    totalFiled: stats.totalFiled,
+    medianDays: suppressSmallCell(stats.totalFiled, median ?? null),
+    withinWindowPct:
+      stats.overallWithinWindowRate === null
+        ? null
+        : Math.round(stats.overallWithinWindowRate * 100),
+  }
+}

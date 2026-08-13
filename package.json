@@ -10,7 +10,7 @@
     "dev": "next dev",
     "build": "npm run typecheck && next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && node scripts/check-server-actions.mjs",
     "lint": "next lint",
     "test": "vitest run --exclude 'tests/e2e/**'",
     "test:watch": "vitest",
@@ -27,16 +27,20 @@
     "notify:send": "tsx --env-file-if-exists=.env.local scripts/send-notifications.ts",
     "audit": "npm audit --audit-level=high",
     "test:e2e": "vitest run tests/e2e",
-    "agents:run": "tsx --env-file-if-exists=.env.local scripts/run-agents.ts"
+    "agents:run": "tsx --env-file-if-exists=.env.local scripts/run-agents.ts",
+    "check:server-actions": "node scripts/check-server-actions.mjs"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.27.0",
     "next": "16.3.0",
     "pg": "^8.16.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "sonner": "^2.0.8",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.1.12"
   },

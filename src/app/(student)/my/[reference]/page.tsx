@@ -62,7 +62,7 @@ export default async function GrievanceDetailPage({
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4">
+    <div data-surface="public" className="mx-auto flex max-w-2xl flex-col gap-4">
       {filed === '1' && (
         <Alert variant="success" title="Grievance filed">
           Your reference number is <span className="font-mono font-semibold">{grievance.reference}</span>. Save it

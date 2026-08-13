@@ -36,7 +36,7 @@ export default async function MyGrievancesPage({
     `border-b-2 px-1 pb-2 text-sm font-medium ${active ? 'border-accent text-fg' : 'border-transparent text-fg-muted hover:text-fg'}`
 
   return (
-    <div className="flex flex-col gap-4">
+    <div data-surface="public" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold text-fg">My grievances</h1>
         <Link href="/my/new" className={buttonClasses('primary')}>

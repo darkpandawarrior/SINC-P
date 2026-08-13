@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge'
 import { buttonClasses } from '@/components/ui/Button'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { SlaBadge } from '@/components/ui/SlaBadge'
+import { SlaRing } from '@/components/ui/SlaRing'
 import { StatusPill } from '@/components/ui/StatusPill'
 import { allowedTransitions, canAssign, canSetStatus } from '@/lib/grievance/policy'
 import { getGrievanceDetail, listAssignableStaff, type GrievanceDetail } from '@/lib/grievance/service'
@@ -42,6 +43,7 @@ export default async function CaseViewPage({ params }: PageProps) {
         <div className="flex items-center gap-2">
           <StatusPill status={grievance.status} />
           <SlaBadge grievance={grievance} />
+          <SlaRing grievance={grievance} />
         </div>
       </div>
 

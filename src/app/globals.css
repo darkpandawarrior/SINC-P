@@ -218,3 +218,247 @@ body {
 .skip-link:focus {
   top: 0.5rem;
 }
+
+/* ===========================================================================
+   Motion
+   ===========================================================================
+   Every animation here is decoration over a layout that already works. Nothing
+   below is load-bearing: strip the whole block and the page still renders, still
+   submits, still reads correctly in a screen reader. That is the rule for a tool
+   people use to file a complaint about their hostel from a four-year-old Android
+   on college wifi.
+   =========================================================================== */
+
+@theme {
+  /* One scale, so unrelated things do not each invent their own timing. */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 120ms;
+  --duration-base: 220ms;
+  --duration-slow: 420ms;
+
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 12px -2px rgb(0 0 0 / 0.08);
+  --shadow-overlay: 0 8px 32px -8px rgb(0 0 0 / 0.24), 0 2px 8px -2px rgb(0 0 0 / 0.12);
+}
+
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+@keyframes ring-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+@layer utilities {
+  .animate-fade-rise { animation: fade-rise var(--duration-base) var(--ease-out-quint) both; }
+  .animate-overlay-in { animation: overlay-in var(--duration-fast) ease-out both; }
+  .animate-panel-in { animation: panel-in var(--duration-base) var(--ease-out-quint) both; }
+  .animate-ring-pulse { animation: ring-pulse 2s ease-in-out infinite; }
+
+  /* Rows enter in sequence rather than all at once, which reads as the table
+     arriving rather than the page flashing. Capped at 12: past that the last row
+     would wait long enough to feel broken rather than considered. */
+  .stagger > * { animation: fade-rise var(--duration-base) var(--ease-out-quint) both; }
+  .stagger > *:nth-child(1)  { animation-delay: 0ms; }
+  .stagger > *:nth-child(2)  { animation-delay: 20ms; }
+  .stagger > *:nth-child(3)  { animation-delay: 40ms; }
+  .stagger > *:nth-child(4)  { animation-delay: 60ms; }
+  .stagger > *:nth-child(5)  { animation-delay: 80ms; }
+  .stagger > *:nth-child(6)  { animation-delay: 100ms; }
+  .stagger > *:nth-child(7)  { animation-delay: 120ms; }
+  .stagger > *:nth-child(8)  { animation-delay: 140ms; }
+  .stagger > *:nth-child(9)  { animation-delay: 160ms; }
+  .stagger > *:nth-child(10) { animation-delay: 180ms; }
+  .stagger > *:nth-child(n + 11) { animation-delay: 200ms; }
+
+  .skeleton {
+    background-image: linear-gradient(
+      90deg,
+      var(--color-status-neutral-bg) 0%,
+      var(--color-border) 50%,
+      var(--color-status-neutral-bg) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  /* Interactive lift. Transform only, so it never triggers layout. */
+  .lift {
+    transition:
+      transform var(--duration-fast) var(--ease-out-quint),
+      box-shadow var(--duration-fast) var(--ease-out-quint);
+  }
+  .lift:hover { transform: translateY(-1px); box-shadow: var(--shadow-raised); }
+  .lift:active { transform: translateY(0); }
+}
+
+/* Native cross-page transitions. Costs no JavaScript and degrades to nothing in a
+   browser that does not support it. */
+@view-transition { navigation: auto; }
+
+::view-transition-old(root) { animation: overlay-in var(--duration-fast) ease-out reverse; }
+::view-transition-new(root) { animation: fade-rise var(--duration-base) var(--ease-out-quint); }
+
+/* The one non-negotiable. A vestibular disorder is not a preference setting, and a
+   compliance tool that ignores the OS-level request is failing the accessibility
+   claim it makes elsewhere in this file. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  @view-transition { navigation: none; }
+  .lift:hover { transform: none; }
+}
+
+::selection {
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent-soft-fg);
+}
+
+/* Focus rings stay visible and consistent. Never remove this without replacing it. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* ===========================================================================
+   The two registers
+   ===========================================================================
+   This product has two audiences who need opposite things from the same system.
+
+   A Registrar working forty cases before an accreditation visit needs calm, dense
+   and printable. Vibrance there is noise, and noise costs them accuracy.
+
+   A nineteen-year-old filing at 11pm about a hostel with no water needs to believe
+   somebody is actually going to read it. Institutional grey tells them what every
+   other college portal has already told them, which is that this is a form that
+   goes nowhere.
+
+   So the officer console keeps the calm palette above, and the public and student
+   surfaces opt into the warmer one below by setting data-surface="public" on a
+   wrapper. Same tokens, same contrast floors, different emotional weight. Nothing
+   here changes a status colour: red still means overdue everywhere.
+   =========================================================================== */
+
+@theme {
+  --color-hope-1: #0e7490;
+  --color-hope-2: #4f46e5;
+  --color-hope-3: #b45309;
+  --color-hope-soft: #ecfeff;
+}
+
+[data-surface='public'] {
+  --color-bg: #fbfcfe;
+  --color-surface: #ffffff;
+  --color-accent: #4338ca;
+  --color-accent-hover: #3730a3;
+  --color-accent-soft-bg: #eef2ff;
+  --color-accent-soft-fg: #3730a3;
+  --color-accent-soft-border: #a5b4fc;
+  --color-border: #e2e8f0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) [data-surface='public'] {
+    --color-bg: #080b12;
+    --color-surface: #10151f;
+    --color-accent: #818cf8;
+    --color-accent-hover: #a5b4fc;
+    --color-accent-soft-bg: #1a1f38;
+    --color-accent-soft-fg: #c7d2fe;
+    --color-hope-soft: #082b31;
+  }
+}
+:root[data-theme='dark'] [data-surface='public'] {
+  --color-bg: #080b12;
+  --color-surface: #10151f;
+  --color-accent: #818cf8;
+  --color-accent-hover: #a5b4fc;
+  --color-accent-soft-bg: #1a1f38;
+  --color-accent-soft-fg: #c7d2fe;
+  --color-hope-soft: #082b31;
+}
+
+@keyframes aurora {
+  0%   { transform: translate3d(-8%, -4%, 0) scale(1.05); }
+  50%  { transform: translate3d(6%, 4%, 0) scale(1.15); }
+  100% { transform: translate3d(-8%, -4%, 0) scale(1.05); }
+}
+@keyframes count-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@layer utilities {
+  /* A slow colour field behind the hero. Blurred radial gradients rather than an
+     image: nothing to download, nothing for the CSP to block, and it scales to any
+     viewport without a second asset. */
+  .aurora {
+    background:
+      radial-gradient(38rem 22rem at 12% 18%, color-mix(in oklab, var(--color-hope-1) 26%, transparent), transparent 70%),
+      radial-gradient(34rem 20rem at 82% 12%, color-mix(in oklab, var(--color-hope-2) 24%, transparent), transparent 70%),
+      radial-gradient(30rem 18rem at 60% 88%, color-mix(in oklab, var(--color-hope-3) 18%, transparent), transparent 70%);
+    filter: blur(28px);
+    animation: aurora 26s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .text-gradient {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-hope-1),
+      var(--color-hope-2) 55%,
+      var(--color-hope-3)
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .animate-count-in { animation: count-in var(--duration-slow) var(--ease-out-quint) both; }
+
+  /* A hairline that reads as craft at a glance and costs one gradient. */
+  .rule-gradient {
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-accent-soft-border),
+      transparent
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora { animation: none; }
+}
+
+/* Print: the compliance dashboard ends up in a self-study report, so ink and colour
+   fields are actively unhelpful there. */
+@media print {
+  .aurora, .skeleton { display: none !important; }
+  * { box-shadow: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+}

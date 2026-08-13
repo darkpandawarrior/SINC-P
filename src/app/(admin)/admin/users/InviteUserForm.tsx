@@ -6,7 +6,8 @@ import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'
 import type { Role } from '@/lib/grievance/policy'
-import { inviteUserAction, inviteUserInitialState } from './actions'
+import { inviteUserAction } from './actions'
+import { inviteUserInitialState } from './state'
 
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: 'student', label: 'Student' },

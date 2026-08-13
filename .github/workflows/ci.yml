@@ -56,6 +56,10 @@ jobs:
 
       - run: npm run lint
 
+      # TypeScript cannot see the "use server may only export async functions" rule and
+      # dev only trips it when a page is rendered. This has bitten twice.
+      - run: npm run check:server-actions
+
       - name: Apply schema and row-level security policies
         run: |
           npx drizzle-kit push --force

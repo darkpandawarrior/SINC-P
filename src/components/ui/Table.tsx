@@ -16,12 +16,23 @@ export function Thead(props: HTMLAttributes<HTMLTableSectionElement>) {
   return <thead {...props} />
 }
 
-export function Tbody(props: HTMLAttributes<HTMLTableSectionElement>) {
-  return <tbody {...props} />
+/** Rows arrive in sequence rather than all at once, which reads as the table loading
+ *  rather than the page flashing. Pure CSS, and the reduced-motion block in globals.css
+ *  collapses it to nothing for anyone who has asked for that. */
+export function Tbody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+  return <tbody className={cn('stagger', className)} {...props} />
 }
 
 export function Tr({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn('border-b border-border', className)} {...props} />
+  return (
+    <tr
+      className={cn(
+        'border-b border-border transition-colors duration-fast hover:bg-accent-soft-bg/40',
+        className,
+      )}
+      {...props}
+    />
+  )
 }
 
 export function Th({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {

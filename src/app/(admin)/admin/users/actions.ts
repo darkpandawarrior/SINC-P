@@ -7,14 +7,8 @@ import { isCsrfValid } from '@/lib/auth/csrf'
 import type { Role } from '@/lib/grievance/policy'
 import { requireAdminActor } from '../../_lib/actor'
 
-export interface InviteUserState {
-  status: 'idle' | 'error' | 'email-taken' | 'invited'
-  message?: string
-  invited?: { email: string; fullName: string; temporaryPassword: string }
-}
+import type { InviteUserState } from './state'
 
-const initialState: InviteUserState = { status: 'idle' }
-export { initialState as inviteUserInitialState }
 
 /**
  * useActionState, not the redirect-then-revalidate shape the rest of this vertical

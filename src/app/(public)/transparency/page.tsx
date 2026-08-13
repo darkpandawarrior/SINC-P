@@ -31,7 +31,7 @@ export default async function TransparencyPage() {
   const stats = await getTransparencyStats(institution.id)
 
   return (
-    <div className="flex flex-col gap-8">
+    <div data-surface="public" className="flex flex-col gap-8">
       <section className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-fg">Transparency — {institution.name}</h1>
         <p className="max-w-2xl text-fg-muted">
