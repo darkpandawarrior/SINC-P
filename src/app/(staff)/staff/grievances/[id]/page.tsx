@@ -163,8 +163,8 @@ export default async function CaseViewPage({ params }: PageProps) {
           </Card>
 
           <Alert variant="info" title="Tamper-evident, not tamper-proof">
-            Every entry below is hash-chained. Editing history isn't offered because
-            there's no code path that does it — corrections are new entries, not edits.
+            Every entry below is hash-chained. Editing history isn&apos;t offered because
+            there&apos;s no code path that does it — corrections are new entries, not edits.
           </Alert>
         </div>
       </div>

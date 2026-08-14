@@ -2,7 +2,7 @@
   "name": "sinc-p",
   "version": "2.0.0",
   "private": true,
-  "description": "SINC-P \u2014 statutory grievance redressal and campus communications for Indian higher education.",
+  "description": "SINC-P — statutory grievance redressal and campus communications for Indian higher education.",
   "engines": {
     "node": ">=22.0.0"
   },
@@ -11,7 +11,7 @@
     "build": "npm run typecheck && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit && node scripts/check-server-actions.mjs",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "vitest run --exclude 'tests/e2e/**'",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -52,6 +52,8 @@
     "@types/react-dom": "^19.2.4",
     "@vitest/coverage-v8": "^4.1.10",
     "drizzle-kit": "^0.31.6",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.1",
     "playwright-core": "^1.62.1",
     "postcss": "^8.5.25",
     "tailwindcss": "^4.3.3",
