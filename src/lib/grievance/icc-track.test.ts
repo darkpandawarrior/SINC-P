@@ -17,7 +17,13 @@ import { dbAvailable } from '@/test/db'
 import { pool, withTenant, withoutTenantScope } from '@/db/client'
 import { categories, grievances, institutions, users } from '@/db/schema'
 import { hashPassword } from '@/lib/auth/password'
-import { complianceSnapshot, getGrievanceForActor, listGrievances, listQueue } from './service'
+import {
+  complianceSnapshot,
+  detectPatterns,
+  getGrievanceForActor,
+  listGrievances,
+  listQueue,
+} from './service'
 import type { Actor, Role } from './policy'
 
 const SLUG = `icc-track-${Date.now()}`
@@ -182,5 +188,17 @@ describe.skipIf(!dbAvailable)('ICC track confidentiality', () => {
     expect(names.some((n) => n.includes('icc') || n.includes('harassment'))).toBe(false)
     // The ICC case must not be inside the filed total either.
     expect(snapshot.totalFiled).toBe(1)
+  })
+
+  it('never clusters an ICC case into the systemic-patterns panel', async () => {
+    // The third surface that builds its own query. A cluster prints shared terms and a
+    // subject line on the moderator's queue page, so an unscoped clustering query would
+    // publish the contents of confidential complaints rather than merely their count.
+    const patterns = await detectPatterns(actors.moderator)
+    const allIds = patterns.flatMap((p) => p.grievanceIds)
+    expect(allIds).not.toContain(iccId)
+    for (const p of patterns) {
+      expect(p.subject.toLowerCase()).not.toContain('icc')
+    }
   })
 })

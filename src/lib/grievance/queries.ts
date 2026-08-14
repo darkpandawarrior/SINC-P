@@ -282,7 +282,17 @@ export async function complianceSnapshot(
     // which is exactly what the track gate exists to prevent.
     const tracks = accessibleTracks(actor.role)
     const rows = await tx
-      .select()
+      // Seven columns, not the whole row. See ComplianceRow: `body` alone is up to 8000
+      // characters and the aggregation never reads it.
+      .select({
+        categoryId: grievances.categoryId,
+        closedAt: grievances.closedAt,
+        createdAt: grievances.createdAt,
+        dueAt: grievances.dueAt,
+        kind: grievances.kind,
+        resolvedAt: grievances.resolvedAt,
+        status: grievances.status,
+      })
       .from(grievances)
       .where(
         and(
@@ -433,6 +443,15 @@ export async function closeGrievance(
 // Systemic patterns
 // ---------------------------------------------------------------------------
 
+/**
+ * How many recent open grievances the clustering looks at.
+ *
+ * 400 gives roughly 80,000 pairwise comparisons, which is a few milliseconds, and it is
+ * far more than any real institution has open at once. It exists so the queue page cannot
+ * degrade quietly as a backlog grows.
+ */
+export const PATTERN_SCAN_LIMIT = 400
+
 export interface PatternGroup {
   grievanceIds: string[]
   references: string[]
@@ -475,10 +494,21 @@ export async function detectPatterns(actor: Actor, limit = 5): Promise<PatternGr
       .where(
         and(
           eq(grievances.institutionId, actor.institutionId),
+          // The third surface that builds its own query, and so the third that needs the
+          // track gate. Without it a cluster could group ICC complaints and print their
+          // shared terms and subject on the moderator's queue page.
+          inArray(grievances.track, accessibleTracks(actor.role)),
           gte(grievances.createdAt, since),
           sql`${grievances.status} NOT IN ('closed','rejected','withdrawn')`,
         ),
       )
+      // Clustering is O(n squared) on pairwise similarity. A few hundred open grievances
+      // is microseconds; an institution with a bad term and no triage could have
+      // thousands, and this runs on every load of the queue page. Cap the input at the
+      // most recent slice rather than letting one page get slower as an institution's
+      // backlog grows.
+      .orderBy(desc(grievances.createdAt))
+      .limit(PATTERN_SCAN_LIMIT)
 
     const byId = new Map(rows.map((r) => [r.id, r]))
     const clusters = clusterGrievances(

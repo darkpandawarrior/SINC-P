@@ -126,8 +126,22 @@ export function categoryStats(
     .sort((a, b) => b.count - a.count)
 }
 
+/**
+ * Only the seven columns this function reads.
+ *
+ * Named explicitly so the query can project them. Selecting whole rows pulled `subject`
+ * and `body` for every grievance in the reporting window, and `body` is up to 8000
+ * characters. For an institution with a year of grievances that is megabytes over the
+ * wire and through the JSON parser, to compute counts and medians that never look at
+ * either column.
+ */
+export type ComplianceRow = Pick<
+  Grievance,
+  'categoryId' | 'closedAt' | 'createdAt' | 'dueAt' | 'kind' | 'resolvedAt' | 'status'
+>
+
 export function buildComplianceStats(
-  items: readonly Grievance[],
+  items: readonly ComplianceRow[],
   categoryRows: readonly Pick<Category, 'id' | 'name'>[],
   cycleStart: Date,
   cycleEnd: Date,

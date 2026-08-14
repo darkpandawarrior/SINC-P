@@ -19,13 +19,13 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 ![Postgres](https://img.shields.io/badge/Postgres_17-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Drizzle](https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=flat-square&logo=drizzle&logoColor=black)
 ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-273-success?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-274-success?style=flat-square)
 ![Coverage](https://img.shields.io/badge/coverage-75%25-success?style=flat-square)
 ![Tenant isolation](https://img.shields.io/badge/tenant_isolation-Postgres_RLS-0f766e?style=flat-square)
 ![UGC](https://img.shields.io/badge/UGC_Grievance_Regs-2023-0ea5e9?style=flat-square)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-64748b?style=flat-square)](LICENSE)
 
-**[Why](#why-sinc-p)** · **[Highlights](#highlights)** · **[What changed](#what-changed-since-2019)** · **[Screens](#screens)** · **[Docs](#documentation)** · **[Design](#two-registers-one-system)** · **[AI and agents](#the-2026-layer-ai-and-agents)** · **[Architecture](#architecture)** · **[Getting started](#getting-started)** · **[Compliance](#compliance-cited)** · **[Prove it](#prove-it-yourself)** · **[Honesty](#whats-real-and-what-isnt-honestly)**
+**[Why](#why-sinc-p)** · **[Highlights](#highlights)** · **[What changed](#what-changed-since-2019)** · **[Screens](#screens)** · **[Flow](docs/flow.md)** · **[Docs](#documentation)** · **[Design](#two-registers-one-system)** · **[AI and agents](#the-2026-layer-ai-and-agents)** · **[Architecture](#architecture)** · **[Getting started](#getting-started)** · **[Compliance](#compliance-cited)** · **[Prove it](#prove-it-yourself)** · **[Honesty](#whats-real-and-what-isnt-honestly)**
 
 **Portfolio:** [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/) &nbsp;·&nbsp; **Origin:** final-year project, MANIT Bhopal, 2019 &nbsp;·&nbsp; **Siblings:** [Mileway](https://github.com/darkpandawarrior/Mileway) · [PaymentsLab](https://github.com/darkpandawarrior/PaymentsLab) · [Kursi](https://github.com/darkpandawarrior/Kursi)
 
@@ -65,7 +65,7 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 </details>
 
 > **At a glance.** **25 routes** across five role-scoped areas · **12 tables**, 11 of them tenant-scoped
-> under `FORCE ROW LEVEL SECURITY` · **273 tests** at 75% coverage, plus an 8-step browser journey ·
+> under `FORCE ROW LEVEL SECURITY` · **274 tests** at 75% coverage, plus an 8-step browser journey ·
 > a hash-chained audit trail re-verified on every seed run · **one command** that proves tenant
 > isolation actually fires instead of asking you to believe it.
 
@@ -619,7 +619,7 @@ recoverable. Losing one is not.
 ## Testing and quality
 
 ```bash
-npm test              # 273 unit and integration
+npm test              # 274 unit and integration
 npm run test:e2e      # 8 steps through a real browser (needs the app running)
 npm run audit         # fails on a high or critical advisory
 npm run typecheck     # strict, noUncheckedIndexedAccess
@@ -691,6 +691,7 @@ project it was trying to be is what got built.
 
 | | |
 |---|---|
+| [flow.md](docs/flow.md) | One grievance end to end: every screen, who sees it at each point, and what gets written down |
 | [architecture.md](docs/architecture.md) | Why the boundaries sit where they do, and what breaks if you move them |
 | [glossary.md](docs/glossary.md) | SGRC, ICC, IQAC, NAAC, AISHE, PoSH, DPDP. Read this first if the domain is new |
 | [compliance.md](docs/compliance.md) | Every regulatory requirement, with a link on each claim and the gaps named |
