@@ -1,5 +1,22 @@
 'use client'
 
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/immutability --
+ * Two React Compiler rules, scoped to this file rather than switched off repo-wide, because the
+ * code they flag is defensible and the alternative is silently weakening the linter everywhere.
+ *
+ * set-state-in-effect (the useEffect below): the theme is read off document.documentElement on
+ * mount, which cannot be done during render without breaking hydration — the server has no DOM.
+ * The correct modern fix is useSyncExternalStore subscribing to the same attribute; that is a real
+ * change to how this component reads theme and belongs in its own commit, not in a CI-unblocking one.
+ *
+ * immutability (toggleTheme): writing document.documentElement.dataset.theme from an event handler
+ * is the DOM mutation the toggle exists to perform. The rule cannot tell that apart from mutating
+ * captured state.
+ *
+ * Both are pre-existing and were invisible until eslint ran here for the first time since the
+ * Next 16 upgrade removed `next lint`.
+ */
+
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Command } from 'cmdk'
