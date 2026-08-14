@@ -17,7 +17,7 @@ import { dbAvailable } from '@/test/db'
 import { pool, withTenant, withoutTenantScope } from '@/db/client'
 import { categories, grievances, institutions, users } from '@/db/schema'
 import { hashPassword } from '@/lib/auth/password'
-import { getGrievanceForActor, listGrievances, listQueue } from './service'
+import { complianceSnapshot, getGrievanceForActor, listGrievances, listQueue } from './service'
 import type { Actor, Role } from './policy'
 
 const SLUG = `icc-track-${Date.now()}`
@@ -168,5 +168,19 @@ describe.skipIf(!dbAvailable)('ICC track confidentiality', () => {
     const queue = await listQueue(actors.moderator, { categoryId: iccCat!.id, page: 1 })
     expect(queue.items).toHaveLength(0)
     expect(queue.total).toBe(0)
+  })
+
+  it('keeps ICC out of the compliance dashboard, counts and category names alike', async () => {
+    // An aggregate leaks as effectively as a row. "Sexual Harassment (ICC): 2 filed"
+    // discloses both the existence and the volume of complaints that are confidential to
+    // the committee, and a zero row still discloses that the channel exists at all.
+    const snapshot = await complianceSnapshot(actors.moderator)
+    expect(snapshot).not.toBeNull()
+    if (!snapshot) return
+
+    const names = snapshot.byCategory.map((c) => c.categoryName.toLowerCase())
+    expect(names.some((n) => n.includes('icc') || n.includes('harassment'))).toBe(false)
+    // The ICC case must not be inside the filed total either.
+    expect(snapshot.totalFiled).toBe(1)
   })
 })

@@ -24,13 +24,7 @@ import {
   type Institution,
   type User,
 } from '@/db/schema'
-import {
-  canSetStatus,
-  canView,
-  canViewInternalRemarks,
-  isStaff,
-  type Actor,
-} from './policy'
+import { canSetStatus, canView, canViewInternalRemarks, isStaff, type Actor, accessibleTracks } from './policy'
 import { slaState } from './sla'
 import { buildComplianceStats, type ComplianceStats } from './compliance'
 import {
@@ -282,12 +276,18 @@ export async function complianceSnapshot(
 
   return withTenant(actor.institutionId, async (tx) => {
     // Sequential: one connection, one query in flight — see getGrievanceDetail's note.
+    // Track-scoped, like every other read. An aggregate leaks just as effectively as a
+    // row: showing a moderator "Sexual Harassment (ICC): 2 filed" discloses both the
+    // existence and the volume of complaints that are confidential to the committee,
+    // which is exactly what the track gate exists to prevent.
+    const tracks = accessibleTracks(actor.role)
     const rows = await tx
       .select()
       .from(grievances)
       .where(
         and(
           eq(grievances.institutionId, actor.institutionId),
+          inArray(grievances.track, tracks),
           gte(grievances.createdAt, since),
           lte(grievances.createdAt, until),
         ),
@@ -295,7 +295,14 @@ export async function complianceSnapshot(
     const categoryRows = await tx
       .select({ id: categories.id, name: categories.name })
       .from(categories)
-      .where(eq(categories.institutionId, actor.institutionId))
+      .where(
+        and(
+          eq(categories.institutionId, actor.institutionId),
+          // Otherwise the category name appears with a zero row, which still discloses
+          // that the institution runs an ICC channel and what it is called.
+          inArray(categories.track, tracks),
+        ),
+      )
 
     return buildComplianceStats(rows, categoryRows, since, until, new Date())
   })

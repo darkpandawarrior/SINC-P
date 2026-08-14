@@ -132,13 +132,16 @@ For `icc` the answer is: the Internal Complaints Committee, and nobody else.
 | `ombudsperson` | **No** |
 | The student who filed it | Yes, their own |
 
-Two places enforce this, because they fail differently:
+Three places enforce this, because they fail differently:
 
 - `canView` gates a record once you hold one.
 - `accessibleTracks` builds the `WHERE` clause for every list query. A per-record check
   does not protect a list endpoint: without this, the officer queue would hand a moderator
-  every ICC complaint in the institution. That is the bug this function exists to prevent
-  and it has its own test.
+  every ICC complaint in the institution.
+- The same scoping applies to **aggregates**. The compliance dashboard originally showed a
+  moderator "Sexual Harassment (ICC): 2 filed", which discloses both the existence and the
+  volume of confidential complaints, and a zero row would still disclose that the channel
+  exists. Found by looking at a screenshot, not by a test, which is why there is now a test.
 
 The clock is ninety **calendar** days, from Regulation 7. The 2023 working-day rule does
 not apply here because that clause does not say working.

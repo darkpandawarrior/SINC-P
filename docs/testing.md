@@ -3,7 +3,7 @@
 What is tested, what deliberately is not, and why the split falls where it does.
 
 ```bash
-npm test              # 272 unit and integration
+npm test              # 273 unit and integration
 npm run test:e2e      # 8 browser steps, needs the app running
 npm run typecheck     # tsc + the 'use server' guard
 npm run db:check-rls  # asserts row-level security is actually on
