@@ -55,6 +55,22 @@ proves nothing, because the `REVOKE UPDATE, DELETE` stops the statement before t
 trigger is ever reached, the first run of this suite made exactly that mistake and got
 a misleading `permission denied` pass.
 
+Tests 9-11 were added when tenant erasure shipped and re-verified against PostgreSQL
+17.10 on 2026-09-07 (`docs/verification/run.sh`, output below):
+
+| # | Test | Expected | Actual |
+|---|---|---|---|
+| 9 | `DELETE FROM institutions` for tenant B, as table owner | cascades | `cascaded` |
+| 10 | Tenant B's grievances after its institution is erased | 0 rows | `0` |
+| 11 | Tenant A's grievances are untouched by tenant B's erasure | 1 row | `1` |
+
+```
+==> erasure: deleting a tenant must cascade, everything else must not
+  ok    tenant erasure                                       cascaded
+  ok    the erased tenant is gone                            0
+  ok    the other tenant is untouched                        1
+```
+
 ## What is still not proven here
 
 - No test yet of a pooled connection inheriting a previous request's tenant. The

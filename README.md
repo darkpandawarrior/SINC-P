@@ -27,7 +27,7 @@ a UGC inspector, with a clock on every case and a record nobody can quietly edit
 
 **[Why](#why-sinc-p)** · **[Highlights](#highlights)** · **[What changed](#what-changed-since-2019)** · **[Screens](#screens)** · **[Flow](docs/flow.md)** · **[Docs](#documentation)** · **[Design](#two-registers-one-system)** · **[AI and agents](#the-2026-layer-ai-and-agents)** · **[Architecture](#architecture)** · **[Getting started](#getting-started)** · **[Compliance](#compliance-cited)** · **[Prove it](#prove-it-yourself)** · **[Honesty](#whats-real-and-what-isnt-honestly)**
 
-**Portfolio:** [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/) &nbsp;·&nbsp; **Origin:** final-year project, MANIT Bhopal, 2019 &nbsp;·&nbsp; **Siblings:** [Doori](https://github.com/darkpandawarrior/Doori) · [PaymentsLab-KMP](https://github.com/darkpandawarrior/PaymentsLab-KMP) · [Gaddi](https://github.com/darkpandawarrior/Gaddi)
+**Portfolio:** [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/) · [siddharth-pandalai.vercel.app](https://siddharth-pandalai.vercel.app/) &nbsp;·&nbsp; **Origin:** final-year project, MANIT Bhopal, 2019 &nbsp;·&nbsp; **Siblings:** [Doori](https://github.com/darkpandawarrior/Doori) · [PaymentsLab-KMP](https://github.com/darkpandawarrior/PaymentsLab-KMP) · [Gaddi](https://github.com/darkpandawarrior/Gaddi)
 
 </div>
 
@@ -141,7 +141,7 @@ buys the audit trail; the students show up for the scoreboard.
   the same transaction as the thing that caused it, so a rolled-back status change cannot
   tell a student their case moved. Delivery happens out of band, which keeps SMTP latency
   and SMTP outages out of the request path entirely.
-- 🧪 **Tests that skip instead of screaming.** 47 of the 194 talk to a real Postgres on purpose,
+- 🧪 **Tests that skip instead of screaming.** 84 of the 274 talk to a real Postgres on purpose,
   because RLS and database triggers cannot be meaningfully mocked. Without a database they skip
   with a message telling you which command to run, so a fresh clone never looks broken.
 - 🇮🇳 **Built for the actual buyer.** AISHE code on the institution record, Asia/Kolkata clocks,
@@ -362,7 +362,7 @@ have a bug and the cost of getting this wrong is the kind that ends a B2B produc
 1. **Application scoping.** Every tenant query goes through `withTenant(institutionId, …)`.
 2. **Transaction-local context.** `set_config('app.institution_id', …, true)`. That third argument
    is load-bearing. With `false` a pooled connection hands the next request the previous tenant.
-3. **`FORCE ROW LEVEL SECURITY`** on all ten tables, so the policy binds the table owner too.
+3. **`FORCE ROW LEVEL SECURITY`** on all eleven tenant tables, so the policy binds the table owner too.
 4. **A restricted runtime role.** `sincp_app` is `rolsuper = f`, `rolbypassrls = f`.
 
 Cross-tenant access exists (the login lookup has to find a user before it knows their institution)
@@ -511,9 +511,10 @@ than government ones. The full landscape is in [docs/gtm/market.md](docs/gtm/mar
 ./docs/verification/run.sh
 ```
 
-Stands up a throwaway Postgres, applies the schema and the policies, and runs eight checks:
+Stands up a throwaway Postgres, applies the schema and the policies, and runs eleven checks:
 per-tenant visibility, fail-closed with no tenant context set, IDOR by explicit UUID, the
-privileged-role escape hatch, and append-only enforcement against both `UPDATE` and `DELETE`.
+privileged-role escape hatch, append-only enforcement against both `UPDATE` and `DELETE`, and
+tenant erasure that cascades for the deleted institution without touching the other one.
 Method and results: [**docs/verification/tenant-isolation.md**](docs/verification/tenant-isolation.md).
 
 The append-only checks deliberately run **as the table owner**. Running them as the unprivileged
@@ -580,7 +581,6 @@ to do. Only running it tells you what it does.
 - **Malware scanning on uploads: not built.**
 - **Rate limiting.** Real, with two stores. In-process memory by default, and a shared
   Postgres store (`RATE_LIMIT_STORE=postgres`) for when a second app container appears.
-- **Screenshots in this README: not captured yet.**
 - **PoSH / ICC routing.** Built, and the confidentiality is enforced in two places rather
   than promised. The committee's own inquiry workflow (statements, witnesses, findings) is
   not built. See [compliance.md](docs/compliance.md).
