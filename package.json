@@ -4,7 +4,7 @@
   "private": true,
   "description": "SINC-P — statutory grievance redressal and campus communications for Indian higher education.",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "next dev",

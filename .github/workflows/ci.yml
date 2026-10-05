@@ -40,12 +40,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
 
-      # npm 10.x (bundled with Node 22) mis-serializes an optional peer dep vitest pulls
+      # npm 10.x (bundled with older Node images) mis-serializes an optional peer dep vitest pulls
       # in, and `npm ci` then hard-fails reading that lockfile shape. Fixed in npm 12 —
       # see the matching note in the Dockerfile's deps stage.
       - run: npm install -g npm@12
@@ -101,9 +101,9 @@ jobs:
     # dependency should fail the build on the next push even when nothing changed.
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm install -g npm@12
       - run: npm ci

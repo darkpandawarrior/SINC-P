@@ -7,9 +7,9 @@
 # ---------------------------------------------------------------------------
 # deps — full install (incl. devDependencies), reused below so nothing installs twice
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 WORKDIR /app
-# node:22-alpine ships npm 10.9.8, which mis-serializes an optional peer dep vitest pulls
+# npm 10.x (bundled with older node images) mis-serializes an optional peer dep vitest pulls
 # in (a nested esbuild satisfying vite's optional peerDependency) — its own platform
 # binaries lose their `optional` flag in package-lock.json's "packages" tree, and `npm
 # ci` then hard-fails on an unrelated platform (aix-ppc64) instead of skipping it. Fixed
@@ -22,7 +22,7 @@ RUN npm ci
 # ---------------------------------------------------------------------------
 # builder — compiles the Next.js standalone server
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
@@ -34,7 +34,7 @@ RUN npm run build
 # service and exits; it is what keeps drizzle-kit/tsx/psql out of the runtime image
 # without a second npm install.
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS migrator
+FROM node:24-alpine AS migrator
 RUN apk add --no-cache postgresql-client
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -50,7 +50,7 @@ ENTRYPOINT ["/migrate-entrypoint.sh"]
 # runner — the production image. No devDependencies, no compiler, no source beyond
 # what Next traced into .next/standalone. Runs as a non-root user.
 # ---------------------------------------------------------------------------
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
