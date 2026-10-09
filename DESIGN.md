@@ -108,3 +108,17 @@ collapses all of it, including view transitions.
 - Gate: `npm run typecheck`, `npm run lint`, `npm test` (see `package.json`).
 - Known gaps: no component-level token file beyond `globals.css`; print rules are described in
   `docs/design-language.md` only.
+
+## Changelog
+
+| Date | Change | Why | Source |
+|---|---|---|---|
+| 2026-10-09 | Initial version, distilled from the code token files and existing design docs | Establish design direction for agents | DESIGN.md rollout |
+
+## Open questions
+
+- Known gap: no component-level token file beyond globals.css; print rules only in docs/design-language.md.
+
+## Evolving this file
+
+Agents: when you change UI and find this file wrong or silent, fix it in the same change and add a Changelog row. Code token files win over this file; when they disagree, correct the doc. A user correction of a visual choice with a stated reason becomes a rule here immediately. Lessons that apply beyond this repo go to the LEARNINGS log of the `design-md` skill in AgentHarness.
