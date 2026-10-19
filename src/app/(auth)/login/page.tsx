@@ -23,7 +23,7 @@ export default async function LoginPage({
   const csrfToken = await readCsrfToken()
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16">
       <div>
         <h1 className="text-2xl font-semibold text-fg">Sign in</h1>
         <p className="mt-1 text-sm text-fg-muted">
@@ -62,6 +62,6 @@ export default async function LoginPage({
           </ul>
         </Alert>
       )}
-    </main>
+    </div>
   )
 }

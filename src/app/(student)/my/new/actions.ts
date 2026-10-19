@@ -26,28 +26,33 @@ function friendlyError(err: unknown): string {
   return 'Something went wrong filing your grievance. Please try again.'
 }
 
-function backToForm(categoryId: string, error: string): never {
-  const qs = new URLSearchParams({ category: categoryId, continue: '1', error })
-  redirect(`/my/new?${qs}`)
+/** What the form re-renders with after a failed filing. Returning the typed values, rather
+ *  than redirecting to a URL, is what keeps an 8000-character complaint from being lost
+ *  to a transient error. File inputs cannot be refilled by any web page, so the student
+ *  is told to reattach them. */
+export interface FilingState {
+  error?: string
+  values?: { subject: string; body: string; kind: 'grievance' | 'suggestion'; isAnonymous: boolean }
 }
 
-export async function submitGrievanceAction(formData: FormData): Promise<void> {
+export async function submitGrievanceAction(_prev: FilingState, formData: FormData): Promise<FilingState> {
   const { actor } = await requireStudentActor()
 
   const categoryId = String(formData.get('categoryId') ?? '')
-  if (!(await isCsrfValid(formData))) {
-    backToForm(categoryId, 'Your session expired. Please try again.')
-  }
-
-  const files = formData.getAll('attachments').filter((f): f is File => f instanceof File && f.size > 0)
-  if (files.length > MAX_ATTACHMENTS) {
-    backToForm(categoryId, `Attach at most ${MAX_ATTACHMENTS} files.`)
-  }
-
   const subject = String(formData.get('subject') ?? '')
   const body = String(formData.get('body') ?? '')
   const kind = formData.get('kind') === 'suggestion' ? 'suggestion' : 'grievance'
   const isAnonymous = formData.get('isAnonymous') === 'on'
+  const backToForm = (error: string): FilingState => ({ error, values: { subject, body, kind, isAnonymous } })
+
+  if (!(await isCsrfValid(formData))) {
+    return backToForm('Your session expired. Please try again.')
+  }
+
+  const files = formData.getAll('attachments').filter((f): f is File => f instanceof File && f.size > 0)
+  if (files.length > MAX_ATTACHMENTS) {
+    return backToForm(`Attach at most ${MAX_ATTACHMENTS} files.`)
+  }
 
   let reference: string
   let grievanceId: string
@@ -56,7 +61,7 @@ export async function submitGrievanceAction(formData: FormData): Promise<void> {
     reference = grievance.reference
     grievanceId = grievance.id
   } catch (err) {
-    backToForm(categoryId, friendlyError(err))
+    return backToForm(friendlyError(err))
   }
 
   const attachmentErrors: string[] = []

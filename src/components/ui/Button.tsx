@@ -17,7 +17,7 @@ const variants: Record<ButtonVariant, string> = {
   primary: 'bg-accent text-accent-fg hover:bg-accent-hover',
   secondary:
     'bg-surface text-fg border border-border-strong hover:bg-status-neutral-bg',
-  danger: 'bg-status-danger-fg text-white hover:opacity-90',
+  danger: 'bg-danger-solid text-danger-solid-fg hover:opacity-90',
   ghost: 'text-fg hover:bg-status-neutral-bg',
 }
 
