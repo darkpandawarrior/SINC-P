@@ -62,6 +62,7 @@
     "vitest": "^4.1.11"
   },
   "overrides": {
-    "esbuild": ">=0.25.0"
+    "esbuild": ">=0.25.0",
+    "fast-glob": "npm:tinyglobby@0.2.17"
   }
 }
