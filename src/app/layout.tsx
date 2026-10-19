@@ -49,7 +49,20 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               SINC-P
               <span className="ml-2 text-sm font-normal text-fg-muted">Grievance Redressal</span>
             </Link>
-            <CommandPalette role={session?.user.role} />
+            <div className="flex items-center gap-2">
+              <CommandPalette role={session?.user.role} />
+              {session && (
+                // Plain form POST: /logout is POST-only (a GET logout is CSRF-able) and works without JS.
+                <form action="/logout" method="post">
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-11 items-center rounded-md border border-border bg-surface px-3 text-sm text-fg hover:bg-status-neutral-bg sm:min-h-0 sm:py-1.5 sm:text-xs"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </header>
 

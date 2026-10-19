@@ -19,8 +19,13 @@
   --color-fg: #14181c;
   --color-fg-muted: #4b5563;
   --color-border: #d1d5db;
-  --color-border-strong: #9ca3af;
+  --color-border-strong: #6b7280;  /* 4.83:1 on surface; UI borders need 3:1 */
   --color-focus-ring: #1d4ed8;
+
+  /* Solid danger button. Separate from status-danger-fg because that token is a text
+     colour that goes pale in dark mode, and white on pale red is 2.02:1. */
+  --color-danger-solid: #b91c1c;
+  --color-danger-solid-fg: #ffffff;
 
   --color-accent: #1e3a8a;
   --color-accent-fg: #ffffff;
@@ -38,7 +43,7 @@
   --color-status-neutral-border: #9ca3af;
 
   --color-status-neutral-muted-bg: #e5e7eb;
-  --color-status-neutral-muted-fg: #6b7280;
+  --color-status-neutral-muted-fg: #515a67;  /* 5.64:1 on its bg; was 3.90 */
   --color-status-neutral-muted-border: #b0b6bf;
 
   --color-status-info-bg: #e6f0fb;
@@ -81,8 +86,10 @@
     --color-fg: #e8eaed;
     --color-fg-muted: #9aa4b2;
     --color-border: #2a323c;
-    --color-border-strong: #3f4a56;
+    --color-border-strong: #6b7685;
     --color-focus-ring: #7fa8ff;
+    --color-danger-solid: #ff9b9b;
+    --color-danger-solid-fg: #3a1414;
 
     --color-accent: #6ea8fe;
     --color-accent-fg: #0b1220;
@@ -134,8 +141,10 @@
   --color-fg: #e8eaed;
   --color-fg-muted: #9aa4b2;
   --color-border: #2a323c;
-  --color-border-strong: #3f4a56;
+  --color-border-strong: #6b7685;
   --color-focus-ring: #7fa8ff;
+  --color-danger-solid: #ff9b9b;
+  --color-danger-solid-fg: #3a1414;
 
   --color-accent: #6ea8fe;
   --color-accent-fg: #0b1220;
@@ -461,4 +470,23 @@ body {
   .aurora, .skeleton { display: none !important; }
   * { box-shadow: none !important; }
   body { background: #fff !important; color: #000 !important; }
+}
+
+/* Touch devices. iOS Safari zooms the page when a focused input is under 16px, and a
+   finger needs 44px. Scoped to coarse pointers so the dense desktop console is unchanged. */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+  button,
+  select,
+  input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+  [role='button'],
+  nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
 }

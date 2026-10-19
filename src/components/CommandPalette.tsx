@@ -145,12 +145,12 @@ export function CommandPalette({ role }: { role?: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="lift hidden items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-fg-muted sm:inline-flex"
+        className="lift inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-fg-muted sm:min-h-0 sm:min-w-0"
         aria-label="Open command palette"
       >
         <Search aria-hidden className="size-3.5" />
-        <span>Search</span>
-        <kbd className="rounded border border-border bg-bg px-1 font-sans text-[10px]">⌘K</kbd>
+        <span className="hidden sm:inline">Search</span>
+        <kbd className="hidden rounded border border-border bg-bg px-1 font-sans text-[10px] sm:inline">⌘K</kbd>
       </button>
 
       <Command.Dialog

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
+import { ConfirmSubmit } from '@/components/ui/ConfirmSubmit'
 import { Card, CardBody } from '@/components/ui/Card'
 import { SlaBadge } from '@/components/ui/SlaBadge'
 import { StatusPill } from '@/components/ui/StatusPill'
@@ -205,9 +206,12 @@ function AcceptForm({ grievanceId, reference }: { grievanceId: string; reference
           <option value="1">1 — Very dissatisfied</option>
         </select>
       </div>
-      <Button type="submit" size="sm" className="w-fit">
-        Accept resolution
-      </Button>
+      <ConfirmSubmit
+        label="Accept resolution"
+        title="Accept this resolution?"
+        description="This closes the grievance and ends the statutory clock. You can still appeal within the appeal window."
+        confirmLabel="Yes, accept and close"
+      />
     </form>
   )
 }
@@ -222,15 +226,22 @@ function WithdrawForm({ grievanceId, reference }: { grievanceId: string; referen
         <p className="text-sm font-medium text-fg">Withdraw this grievance</p>
         <p className="text-sm text-fg-muted">This ends it permanently. There is no undo.</p>
       </div>
+      <label htmlFor="withdraw-remark" className="text-sm text-fg">
+        Reason (optional)
+      </label>
       <textarea
+        id="withdraw-remark"
         name="remark"
         rows={2}
-        placeholder="Reason (optional)"
         className="rounded-md border border-border-strong bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted"
       />
-      <Button type="submit" variant="danger" size="sm" className="w-fit">
-        Withdraw
-      </Button>
+      <ConfirmSubmit
+        variant="danger"
+        label="Withdraw"
+        title="Withdraw this grievance?"
+        description="This ends it permanently. There is no undo."
+        confirmLabel="Yes, withdraw"
+      />
     </form>
   )
 }
