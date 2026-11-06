@@ -105,7 +105,7 @@ What I took from them: check that a guard fires, not that it is configured. The 
 | `complaint-details.php?cid=5` with no ownership check | `canView(actor, grievance)` on every read path |
 | `$_FILES` moved into a web-served folder under the user's own filename | Content sniffed, size capped while streaming, opaque keys outside the web root |
 | Remarks editable in place | Hash-chained, append-only events |
-| Password reset matched email and phone number, no token | Single-use hashed token, 30 minute expiry |
+| Password reset matched email and phone number, no token | The phone-number reset is gone. No replacement flow exists yet; the token table is in `drizzle/0002_password_reset_tokens.sql` and nothing calls it |
 
 The full construct-by-construct list, and how a real 2019 database migrates (`npm run db:import-legacy`, which refuses to carry md5 hashes across and never back-dates a deadline), is in [docs/migration-from-2019.md](docs/migration-from-2019.md).
 
@@ -118,6 +118,7 @@ Deliberately thin: news and the handbook. Information pillar covers the statutor
 Not built, or not proven:
 
 - SSO. There is an OIDC seam with nothing behind it.
+- Password reset. The table for single-use tokens exists and no screen or service uses it.
 - Malware scanning on uploads, field-level encryption at rest, MFA.
 - Retention, per-student erasure and breach notification, which the DPDP Act puts on whoever runs this.
 - The ICC's own inquiry workflow, and the Anti-Ragging Committee as a distinct body (the track and its short clock exist).
